@@ -1,0 +1,107 @@
+# くまもりマップ Netlify設定ファイル（修正版）
+
+# ビルド設定
+# 注意: Flutterはローカルまたは GitHub Actions でビルドし、
+# build/web フォルダをGitにコミットする必要があります
+[build]
+  publish = "build/web"
+  # commandは指定しない（既にビルド済みのファイルをデプロイ）
+
+# ヘッダー設定
+[[headers]]
+  for = "/*"
+  [headers.values]
+    # セキュリティヘッダー
+    X-Frame-Options = "SAMEORIGIN"
+    X-Content-Type-Options = "nosniff"
+    X-XSS-Protection = "1; mode=block"
+    Referrer-Policy = "strict-origin-when-cross-origin"
+    
+    # CORS設定
+    Access-Control-Allow-Origin = "*"
+    
+    # SEO関連
+    X-Robots-Tag = "index, follow"
+
+# 静的ファイルの長期キャッシュ
+[[headers]]
+  for = "/assets/*"
+  [headers.values]
+    Cache-Control = "public, max-age=31536000, immutable"
+
+[[headers]]
+  for = "/icons/*"
+  [headers.values]
+    Cache-Control = "public, max-age=31536000, immutable"
+
+# index.htmlは頻繁に更新されるため短いキャッシュ
+[[headers]]
+  for = "/index.html"
+  [headers.values]
+    Cache-Control = "public, max-age=0, must-revalidate"
+
+# サービスワーカーのキャッシュ設定
+[[headers]]
+  for = "/flutter_service_worker.js"
+  [headers.values]
+    Cache-Control = "no-cache, no-store, must-revalidate"
+
+# Flutter関連ファイル
+[[headers]]
+  for = "/flutter.js"
+  [headers.values]
+    Cache-Control = "public, max-age=3600"
+
+[[headers]]
+  for = "/main.dart.js"
+  [headers.values]
+    Cache-Control = "public, max-age=31536000, immutable"
+
+# CSVデータファイル
+[[headers]]
+  for = "/*.csv"
+  [headers.values]
+    Cache-Control = "public, max-age=3600"
+    Content-Type = "text/csv; charset=utf-8"
+
+# リダイレクト設定（SEO用）
+
+# よく検索されるキーワードURLをメインページにリダイレクト
+[[redirects]]
+  from = "/bear-map"
+  to = "/"
+  status = 301
+
+[[redirects]]
+  from = "/kuma-map"
+  to = "/"
+  status = 301
+
+[[redirects]]
+  from = "/camping-safety"
+  to = "/"
+  status = 301
+
+[[redirects]]
+  from = "/hiking-safety"
+  to = "/"
+  status = 301
+
+[[redirects]]
+  from = "/mountain-safety"
+  to = "/"
+  status = 301
+
+[[redirects]]
+  from = "/outdoor-safety"
+  to = "/"
+  status = 301
+
+# SPAのための設定（最後に配置）
+# 404エラーを index.html にリダイレクト
+[[redirects]]
+  from = "/*"
+  to = "/index.html"
+  status = 200
+
+  

@@ -1,0 +1,169 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <base href="$FLUTTER_BASE_HREF">
+  
+  <meta charset="UTF-8">
+  <meta content="IE=Edge" http-equiv="X-UA-Compatible">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <meta name="description" content="クマ出没情報を元に算出した危険度マップ。現在地や旅先の安全確認にご利用ください。環境省のデータを基に作成。">
+  
+  <!-- iOS meta tags & icons -->
+  <meta name="mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black">
+  <meta name="apple-mobile-web-app-title" content="くまもりマップ">
+  <link rel="apple-touch-icon" href="icons/Icon-192.png">
+  
+  <!-- Favicon -->
+  <link rel="icon" type="image/png" href="favicon.png"/>
+  
+  <title>くまもりマップ - クマ出没危険度確認</title>
+  <link rel="manifest" href="manifest.json">
+  
+  <!-- OGP Meta Tags -->
+  <meta property="og:title" content="くまもりマップ - クマ出没危険度確認">
+  <meta property="og:description" content="クマ出没情報を元に算出した危険度マップ。現在地や旅先の安全確認にご利用ください。">
+  <meta property="og:type" content="website">
+  <meta property="og:url" content="https://kumamori-map.netlify.app/">
+  <meta property="og:image" content="https://kumamori-map.netlify.app/icons/Icon-512.png">
+  <meta property="og:locale" content="ja_JP">
+  <meta property="og:site_name" content="くまもりマップ">
+  
+  <!-- Twitter Card Meta Tags -->
+  <meta name="twitter:card" content="summary_large_image">
+  <meta name="twitter:title" content="くまもりマップ - クマ出没危険度確認">
+  <meta name="twitter:description" content="クマ出没情報を元に算出した危険度マップ。現在地や旅先の安全確認にご利用ください。">
+  <meta name="twitter:image" content="https://kumamori-map.netlify.app/icons/Icon-512.png">
+  
+  <!-- Additional SEO Meta Tags -->
+  <meta name="keywords" content="クマ,熊,出没,危険度,マップ,地図,安全確認,環境省">
+  <meta name="author" content="リサーチコーディネート株式会社">
+  <meta name="robots" content="index, follow">
+  
+  <!-- Theme Color -->
+  <meta name="theme-color" content="#81C784">
+  
+  <!-- Google Analytics -->
+  <script async src="https://www.googletagmanager.com/gtag/js?id=G-GCT59LNNZ2"></script>
+  <script>
+    window.dataLayer = window.dataLayer || [];
+    function gtag(){dataLayer.push(arguments);}
+    gtag('js', new Date());
+    gtag('config', 'G-GCT59LNNZ2');
+  </script>
+  
+  <!-- Structured Data for SEO -->
+  <script type="application/ld+json">
+  {
+    "@context": "https://schema.org",
+    "@type": "WebApplication",
+    "name": "くまもりマップ",
+    "description": "クマ出没情報を元に算出した危険度マップ",
+    "applicationCategory": "SafetyApplication",
+    "operatingSystem": "Web Browser",
+    "offers": {
+      "@type": "Offer",
+      "price": "0",
+      "priceCurrency": "JPY"
+    },
+    "author": {
+      "@type": "Organization",
+      "name": "リサーチコーディネート株式会社",
+      "url": "https://www.research-coordinate.co.jp"
+    }
+  }
+  </script>
+  
+  <!-- Preload important resources -->
+  <link rel="preconnect" href="https://tile.openstreetmap.org">
+  <link rel="dns-prefetch" href="https://tile.openstreetmap.org">
+  
+  <style>
+    /* Loading screen styles */
+    body {
+      margin: 0;
+      padding: 0;
+      background-color: #81C784;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+    }
+    
+    .loading-container {
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      align-items: center;
+      height: 100vh;
+      background: linear-gradient(135deg, #81C784 0%, #66BB6A 100%);
+    }
+    
+    .loading-logo {
+      font-size: 64px;
+      margin-bottom: 20px;
+      animation: pulse 2s infinite;
+    }
+    
+    .loading-text {
+      color: white;
+      font-size: 18px;
+      font-weight: 500;
+      margin-bottom: 30px;
+    }
+    
+    .loading-spinner {
+      width: 40px;
+      height: 40px;
+      border: 4px solid rgba(255, 255, 255, 0.3);
+      border-top-color: white;
+      border-radius: 50%;
+      animation: spin 1s linear infinite;
+    }
+    
+    @keyframes pulse {
+      0%, 100% { transform: scale(1); }
+      50% { transform: scale(1.1); }
+    }
+    
+    @keyframes spin {
+      to { transform: rotate(360deg); }
+    }
+    
+    /* Hide loading screen when Flutter is ready */
+    .flutter-ready .loading-container {
+      display: none;
+    }
+  </style>
+</head>
+<body>
+  <!-- Loading Screen -->
+  <div class="loading-container" id="loading">
+    <div class="loading-logo">🐻</div>
+    <div class="loading-text">くまもりマップ</div>
+    <div class="loading-spinner"></div>
+  </div>
+  
+  <!-- Flutter App Container -->
+  <script src="flutter_bootstrap.js" async></script>
+  
+  <script>
+    // Remove loading screen when Flutter is ready
+    window.addEventListener('flutter-first-frame', function() {
+      document.body.classList.add('flutter-ready');
+    });
+    
+    // Fallback: Remove loading screen after 10 seconds
+    setTimeout(function() {
+      document.body.classList.add('flutter-ready');
+    }, 10000);
+  </script>
+  
+  <!-- No JavaScript Message -->
+  <noscript>
+    <div style="text-align: center; padding: 50px; background-color: #FFF;">
+      <h1>JavaScriptを有効にしてください</h1>
+      <p>このアプリケーションを使用するには、JavaScriptを有効にする必要があります。</p>
+    </div>
+  </noscript>
+</body>
+</html>
+
