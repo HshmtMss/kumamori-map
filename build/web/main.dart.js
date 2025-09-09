@@ -39508,7 +39508,7 @@ r=A.ce("\u304a\u6c17\u8efd\u306b\u304a\u554f\u3044\u5408\u308f\u305b\u304f\u3060
 o=A.dx(8)
 n=A.li(B.bh,1)
 i.push(A.cL(A.fH(A.b([h,B.kO,p,B.dQ,q,B.dQ,r,B.hZ,A.cL(A.fH(A.b([A.ce("\u304a\u554f\u3044\u5408\u308f\u305b",m,m,m,A.cM(m,m,B.aY,m,m,m,m,m,m,m,m,14,m,m,B.h9,m,m,!0,m,m,m,m,m,m,m,m),m,m),B.kO,A.ce("\u30ea\u30b5\u30fc\u30c1\u30b3\u30fc\u30c7\u30a3\u30cd\u30fc\u30c8\u682a\u5f0f\u4f1a\u793e",m,m,m,A.cM(m,m,B.aY,m,m,m,m,m,m,m,m,14,m,m,B.V,m,m,!0,m,m,m,m,m,m,m,m),m,m),B.dQ,A.ce("\u6771\u4eac\u90fd\u65b0\u5bbf\u533a\u897f\u65b0\u5bbf1-20-3 \u897f\u65b0\u5bbf\u9ad8\u6728\u30d3\u30eb8F",m,m,m,A.cM(m,m,B.ca,m,m,m,m,m,m,m,m,14,m,m,m,m,m,!0,m,m,m,m,m,m,m,m),m,m),B.dQ,A.lA(m,A.ce("https://www.research-coordinate.co.jp",m,m,m,A.cM(m,m,B.fz,m,B.i1,m,m,m,m,m,m,12,m,m,m,m,m,!0,m,m,m,m,m,m,m,m),m,m),B.ah,!1,m,m,m,m,m,m,m,m,m,m,m,m,m,new A.ag4(),m,m,m,m,m,m),B.dQ,A.lA(m,A.ce("contact@research-coordinate.co.jp",m,m,m,A.cM(m,m,B.fz,m,B.i1,m,m,m,m,m,m,12,m,m,m,m,m,!0,m,m,m,m,m,m,m,m),m,m),B.ah,!1,m,m,m,m,m,m,m,m,m,m,m,m,m,new A.ag5(),m,m,m,m,m,m)],j),B.a3,B.a1),B.q,m,new A.bN(B.k,m,n,o,m,m,B.Q),m,m,B.je,m)],j),B.a3,B.a1),B.q,m,new A.bN(B.fA,m,s,g,m,m,B.Q),m,B.DP,B.E0,1/0))
-i.push(A.cL(A.kw(A.b([A.lC(B.EJ,B.iL,m,12),B.O5,A.ce("\u6700\u7d42\u66f4\u65b0: 2025\u5e749\u67089\u65e5",m,m,m,A.cM(m,m,B.iL,m,m,m,m,m,m,m,m,10,m,m,m,m,m,!0,m,m,m,m,m,m,m,m),m,m)],j),B.a3,B.ty,B.a1),B.q,m,m,m,m,B.mL,m))
+i.push(A.cL(A.kw(A.b([A.lC(B.EJ,B.iL,m,12),B.O5,A.ce("\u6700\u7d42\u66f4\u65b0: 2025.9.9",m,m,m,A.cM(m,m,B.iL,m,m,m,m,m,m,m,m,10,m,m,m,m,m,!0,m,m,m,m,m,m,m,m),m,m)],j),B.a3,B.ty,B.a1),B.q,m,m,m,m,B.mL,m))
 i.push(B.yE)
 return A.cL(A.axf(A.fH(A.b([k,new A.cT(B.E3,A.fH(i,B.b5,B.a1),m)],j),B.a3,B.a1),b,m),B.q,m,new A.bN(B.k,m,m,B.zV,l,m,B.Q),m,m,m,m)},
 $S:287}
