@@ -551,44 +551,32 @@ class _BearMapPageState extends State<BearMapPage> {
       return Colors.transparent;
     }
     
-    double normalizedScore = (score / 5.0).clamp(0.0, 1.0);
+    // スコアの正規化を7.0基準に変更
+    double normalizedScore = (score / 7.0).clamp(0.0, 1.0);
     
-    // 0より大0.3未満（スコア0-1.5）: 薄緑～緑
-    if (normalizedScore > 0 && normalizedScore < 0.3) {
-      return Color.lerp(
-        Colors.green.withOpacity(heatmapOpacity * 0.3),
-        Colors.green.withOpacity(heatmapOpacity),
-        normalizedScore / 0.3,
-      )!;
-    } else if (normalizedScore < 0.5) {
-      return Color.lerp(
-        Colors.green.withOpacity(heatmapOpacity),
-        Colors.yellow.withOpacity(heatmapOpacity),
-        (normalizedScore - 0.3) / 0.2,
-      )!;
-    } else if (normalizedScore < 0.75) {
-      return Color.lerp(
-        Colors.yellow.withOpacity(heatmapOpacity),
-        Colors.orange.withOpacity(heatmapOpacity),
-        (normalizedScore - 0.5) * 4,
-      )!;
-    } else {
-      return Color.lerp(
-        Colors.orange.withOpacity(heatmapOpacity),
-        Colors.red.shade900.withOpacity(math.min(heatmapOpacity + 0.1, 1.0)),
-        (normalizedScore - 0.75) * 4,
-      )!;
+    // より段階的な色変化
+    if (normalizedScore > 0 && normalizedScore < 0.14) {  // score 0-1.0
+      return Colors.lightBlue.withOpacity(heatmapOpacity * 0.4);
+    } else if (normalizedScore < 0.28) {  // score 1.0-2.0
+      return Colors.green.withOpacity(heatmapOpacity * 0.5);
+    } else if (normalizedScore < 0.5) {  // score 2.0-3.5
+      return Colors.yellow.withOpacity(heatmapOpacity * 0.6);
+    } else if (normalizedScore < 0.71) {  // score 3.5-5.0
+      return Colors.orange.withOpacity(heatmapOpacity * 0.7);
+    } else {  // score 5.0+
+      return Colors.red.shade700.withOpacity(heatmapOpacity * 0.8);
     }
   }
 
   // スコアからレベル文字列を取得（修正版）
   String getLevelText(double score) {
-    if (score == 0) return '非常に低い';
-    if (score >= 4.5) return '非常に高い';
-    if (score >= 3.0) return '高い';
-    if (score >= 1.5) return '中程度';
-    if (score > 0) return '低い';
-    return '非常に低い';
+    if (score == 0) return '報告なし';
+    if (score < 1.0) return '極めて低い';
+    if (score < 2.0) return '低い';
+    if (score < 3.5) return '中程度';
+    if (score < 5.0) return 'やや高い';
+    if (score >= 5.0) return '高い';
+    return '報告なし';
   }
 
   // 地図タイプに応じたアイコンを返す
@@ -622,11 +610,11 @@ class _BearMapPageState extends State<BearMapPage> {
                     maxZoom: 18.0,
                     interactionOptions: const InteractionOptions(
                       enableMultiFingerGestureRace: false,
-                      rotationThreshold: 20.0,  // より高い値に設定
-                      rotationWinGestures: MultiFingerGesture.none,  // 回転ジェスチャーを完全に無効化
+                      rotationThreshold: 20.0,
+                      rotationWinGestures: MultiFingerGesture.none,
                       pinchZoomThreshold: 0.5,
                       pinchMoveThreshold: 40.0,
-                      flags: InteractiveFlag.all & ~InteractiveFlag.rotate,  // 回転フラグを除外
+                      flags: InteractiveFlag.all & ~InteractiveFlag.rotate,
                     ),
                     onTap: (tapPosition, point) {
                       setPin(point);
@@ -1111,7 +1099,7 @@ class _BearMapPageState extends State<BearMapPage> {
                                         ),
                                         const SizedBox(height: 10),
                                         
-                                        // グラデーションバー（透明を追加）
+                                        // グラデーションバー
                                         LayoutBuilder(
                                           builder: (context, constraints) {
                                             final barWidth = constraints.maxWidth;
@@ -1120,18 +1108,18 @@ class _BearMapPageState extends State<BearMapPage> {
                                             double indicatorPosition = 0;
                                             if (_getDisplayMeshData() != null) {
                                               final score = _getDisplayMeshData()!.score;
-                                              // スコア0: 0%, スコア0.01-1.5: 0-30%, スコア1.5-3.0: 30-50%, 
-                                              // スコア3.0-4.5: 50-75%, スコア4.5-5.0: 75-100%
                                               if (score == 0) {
                                                 indicatorPosition = 0;
-                                              } else if (score <= 1.5) {
-                                                indicatorPosition = (score / 1.5) * 0.3 * barWidth;
-                                              } else if (score <= 3.0) {
-                                                indicatorPosition = (0.3 + ((score - 1.5) / 1.5) * 0.2) * barWidth;
-                                              } else if (score <= 4.5) {
-                                                indicatorPosition = (0.5 + ((score - 3.0) / 1.5) * 0.25) * barWidth;
+                                              } else if (score <= 1.0) {
+                                                indicatorPosition = (score / 1.0) * 0.14 * barWidth;
+                                              } else if (score <= 2.0) {
+                                                indicatorPosition = (0.14 + ((score - 1.0) / 1.0) * 0.14) * barWidth;
+                                              } else if (score <= 3.5) {
+                                                indicatorPosition = (0.28 + ((score - 2.0) / 1.5) * 0.22) * barWidth;
+                                              } else if (score <= 5.0) {
+                                                indicatorPosition = (0.5 + ((score - 3.5) / 1.5) * 0.21) * barWidth;
                                               } else {
-                                                indicatorPosition = (0.75 + ((score - 4.5) / 0.5) * 0.25) * barWidth;
+                                                indicatorPosition = (0.71 + math.min((score - 5.0) / 2.0, 1.0) * 0.29) * barWidth;
                                               }
                                             }
                                             
@@ -1145,19 +1133,20 @@ class _BearMapPageState extends State<BearMapPage> {
                                                     borderRadius: BorderRadius.circular(12),
                                                   ),
                                                 ),
-                                                // グラデーション（透明から赤へ）
+                                                // グラデーション
                                                 Container(
                                                   height: 24,
                                                   decoration: BoxDecoration(
                                                     gradient: LinearGradient(
                                                       colors: [
-                                                        Colors.grey.shade200.withOpacity(0.3),  // 透明を表現
-                                                        Colors.green.withOpacity(0.8),
-                                                        Colors.yellow,
-                                                        Colors.orange,
-                                                        Colors.red.shade900,
+                                                        Colors.grey.shade200.withOpacity(0.3),
+                                                        Colors.lightBlue.withOpacity(0.6),
+                                                        Colors.green.withOpacity(0.7),
+                                                        Colors.yellow.withOpacity(0.8),
+                                                        Colors.orange.withOpacity(0.9),
+                                                        Colors.red.shade700,
                                                       ],
-                                                      stops: const [0.0, 0.3, 0.5, 0.75, 1.0],
+                                                      stops: const [0.0, 0.14, 0.28, 0.5, 0.71, 1.0],
                                                     ),
                                                     borderRadius: BorderRadius.circular(12),
                                                     boxShadow: [
@@ -1194,22 +1183,16 @@ class _BearMapPageState extends State<BearMapPage> {
                                           },
                                         ),
                                         const SizedBox(height: 6),
-                                        // ラベル（修正版）
+                                        // ラベル
                                         Row(
                                           mainAxisAlignment: MainAxisAlignment.spaceBetween,
                                           children: const [
-                                            Text('非常に低い', style: TextStyle(fontSize: 11, color: Colors.grey)),
-                                            Expanded(
-                                              child: Row(
-                                                mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                                                children: [
-                                                  Text('低い', style: TextStyle(fontSize: 11, color: Colors.grey)),
-                                                  Text('中程度', style: TextStyle(fontSize: 11, color: Colors.grey)),
-                                                  Text('高い', style: TextStyle(fontSize: 11, color: Colors.grey)),
-                                                ],
-                                              ),
-                                            ),
-                                            Text('非常に高い', style: TextStyle(fontSize: 11, color: Colors.grey)),
+                                            Text('なし', style: TextStyle(fontSize: 10, color: Colors.grey)),
+                                            Text('極低', style: TextStyle(fontSize: 10, color: Colors.grey)),
+                                            Text('低', style: TextStyle(fontSize: 10, color: Colors.grey)),
+                                            Text('中', style: TextStyle(fontSize: 10, color: Colors.grey)),
+                                            Text('やや高', style: TextStyle(fontSize: 10, color: Colors.grey)),
+                                            Text('高', style: TextStyle(fontSize: 10, color: Colors.grey)),
                                           ],
                                         ),
                                         const SizedBox(height: 10),
@@ -1224,26 +1207,30 @@ class _BearMapPageState extends State<BearMapPage> {
                                                   style: TextStyle(
                                                     fontSize: 20,
                                                     fontWeight: FontWeight.bold,
-                                                    color: _getDisplayMeshData()!.score >= 3.0 
+                                                    color: _getDisplayMeshData()!.score >= 5.0 
                                                         ? Colors.red 
-                                                        : _getDisplayMeshData()!.score >= 1.5 
+                                                        : _getDisplayMeshData()!.score >= 3.5 
                                                             ? Colors.orange 
-                                                            : _getDisplayMeshData()!.score > 0
-                                                                ? Colors.green
-                                                                : Colors.blue,
+                                                            : _getDisplayMeshData()!.score >= 2.0
+                                                                ? Colors.yellow.shade700
+                                                                : _getDisplayMeshData()!.score >= 1.0
+                                                                    ? Colors.green
+                                                                    : Colors.lightBlue,
                                                   ),
                                                 ),
                                                 const SizedBox(height: 4),
                                                 Text(
-                                                  _getDisplayMeshData()!.score >= 4.5
-                                                      ? '最近,クマ出没の報告が多い地域です'
-                                                      : _getDisplayMeshData()!.score >= 3.0
-                                                          ? '最近,クマ出没の報告がある地域です'
-                                                          : _getDisplayMeshData()!.score >= 1.5
-                                                              ? 'クマ出没の報告がある地域です'
-                                                              : _getDisplayMeshData()!.score > 0
-                                                                  ? 'クマ出没の報告は少ない地域です'
-                                                                  : 'クマ出没の報告がない地域です',
+                                                  _getDisplayMeshData()!.score >= 5.0
+                                                      ? 'クマの出没が比較的多い地域です'
+                                                      : _getDisplayMeshData()!.score >= 3.5
+                                                          ? 'クマの出没に注意が必要な地域です'
+                                                          : _getDisplayMeshData()!.score >= 2.0
+                                                              ? 'クマの出没が時々報告される地域です'
+                                                              : _getDisplayMeshData()!.score >= 1.0
+                                                                  ? 'クマの出没報告が少ない地域です'
+                                                                  : _getDisplayMeshData()!.score > 0
+                                                                      ? 'クマの出没はごく稀な地域です'
+                                                                      : '過去のデータでクマの出没報告はありません',
                                                   style: const TextStyle(fontSize: 14, color: Colors.grey),
                                                   textAlign: TextAlign.center,
                                                 ),
@@ -1253,7 +1240,7 @@ class _BearMapPageState extends State<BearMapPage> {
                                         ] else ...[
                                           const Center(
                                             child: Text(
-                                              'クマ出没の報告がない地域です',
+                                              '過去のデータでクマの出没報告はありません',
                                               style: TextStyle(fontSize: 14, color: Colors.grey),
                                             ),
                                           ),
@@ -1330,7 +1317,7 @@ class _BearMapPageState extends State<BearMapPage> {
                                   
                                   const SizedBox(height: 12),
                                   
-                                  // お知らせカード（ボトムシート内に移動）
+                                  // お知らせカード
                                   Container(
                                     padding: const EdgeInsets.all(14),
                                     decoration: BoxDecoration(
@@ -1676,4 +1663,3 @@ class CustomPin {
     this.meshData,
   });
 }
-
