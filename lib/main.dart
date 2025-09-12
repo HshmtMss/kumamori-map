@@ -52,6 +52,9 @@ class _BearMapPageState extends State<BearMapPage> {
   
   // ヒートマップの透明度（0.0-1.0）
   double heatmapOpacity = 0.4;
+
+  // 透明度調整パネルの表示状態
+  bool isOpacityPanelOpen = false;
   
   // 表示する情報のタイプ
   InfoType? activeInfoType;
@@ -378,15 +381,47 @@ class _BearMapPageState extends State<BearMapPage> {
         
         final values = line.split(',').map((e) => e.trim()).toList();
         
-        if (values.length >= 5) {
-          final meshCode = values[0];
-          final second = int.tryParse(values[1]) ?? 0;
-          final sixth = int.tryParse(values[2]) ?? 0;
-          final latest = int.tryParse(values[3]) ?? 0;
-          final latestSingle = int.tryParse(values[4]) ?? 0;
+      //   if (values.length >= 5) {
+      //     final meshCode = values[0];
+      //     final second = int.tryParse(values[1]) ?? 0;
+      //     final sixth = int.tryParse(values[2]) ?? 0;
+      //     final latest = int.tryParse(values[3]) ?? 0;
+      //     final latestSingle = int.tryParse(values[4]) ?? 0;
           
-          double score = calculateScore(second, sixth, latest, latestSingle);
+      //     double score = calculateScore(second, sixth, latest, latestSingle);
           
+      //     final latLng = meshCodeToLatLng(meshCode);
+      //     if (latLng != null) {
+      //       final meshData = MeshData(
+      //         meshCode: meshCode,
+      //         latLng: latLng,
+      //         score: score,
+      //         originalScore: score,
+      //         second: second,
+      //         sixth: sixth,
+      //         latest: latest,
+      //         latestSingle: latestSingle,
+      //       );
+      //       tempList.add(meshData);
+      //       meshMap[meshCode] = meshData;
+      //       validMeshCount++;
+      //     } else {
+      //       invalidMeshCount++;
+      //     }
+      //   }
+      // }
+      if (values.length >= 5) {
+        final meshCode = values[0];
+        final second = int.tryParse(values[1]) ?? 0;
+        final sixth = int.tryParse(values[2]) ?? 0;
+        final latest = int.tryParse(values[3]) ?? 0;
+        final latestSingle = int.tryParse(values[4]) ?? 0;
+        
+        double score = calculateScore(second, sixth, latest, latestSingle);
+        
+        // スコアが0より大きいメッシュのみを処理（パフォーマンス改善）
+        // スコアが0より大きいメッシュのみを処理（パフォーマンス改善）
+        if (score > 0) {
           final latLng = meshCodeToLatLng(meshCode);
           if (latLng != null) {
             final meshData = MeshData(
@@ -401,12 +436,10 @@ class _BearMapPageState extends State<BearMapPage> {
             );
             tempList.add(meshData);
             meshMap[meshCode] = meshData;
-            validMeshCount++;
-          } else {
-            invalidMeshCount++;
           }
         }
-      }
+        }  // ← この閉じ括弧を追加（values.length >= 5 のif文を閉じる）
+        }  // ← この閉じ括弧を追加（forループを閉じる）
       
       // 第2パス：周囲メッシュを考慮したスコア調整
       for (var meshData in tempList) {
@@ -551,44 +584,32 @@ class _BearMapPageState extends State<BearMapPage> {
       return Colors.transparent;
     }
     
-    double normalizedScore = (score / 5.0).clamp(0.0, 1.0);
-    
-    // 0より大0.3未満（スコア0-1.5）: 薄緑～緑
-    if (normalizedScore > 0 && normalizedScore < 0.3) {
-      return Color.lerp(
-        Colors.green.withOpacity(heatmapOpacity * 0.3),
-        Colors.green.withOpacity(heatmapOpacity),
-        normalizedScore / 0.3,
-      )!;
-    } else if (normalizedScore < 0.5) {
-      return Color.lerp(
-        Colors.green.withOpacity(heatmapOpacity),
-        Colors.yellow.withOpacity(heatmapOpacity),
-        (normalizedScore - 0.3) / 0.2,
-      )!;
-    } else if (normalizedScore < 0.75) {
-      return Color.lerp(
-        Colors.yellow.withOpacity(heatmapOpacity),
-        Colors.orange.withOpacity(heatmapOpacity),
-        (normalizedScore - 0.5) * 4,
-      )!;
-    } else {
-      return Color.lerp(
-        Colors.orange.withOpacity(heatmapOpacity),
-        Colors.red.shade900.withOpacity(math.min(heatmapOpacity + 0.1, 1.0)),
-        (normalizedScore - 0.75) * 4,
-      )!;
+    // 0より大きく2未満: 緑
+    if (score > 0 && score < 2.0) {
+      return Colors.green.withOpacity(heatmapOpacity);
+    } 
+    // 2以上4未満: 黄色
+    else if (score >= 2.0 && score < 4.0) {
+      return Colors.yellow.withOpacity(heatmapOpacity);
+    } 
+    // 4以上5未満: オレンジ
+    else if (score >= 4.0 && score < 5.0) {
+      return Colors.orange.withOpacity(heatmapOpacity);
+    } 
+    // 5以上: 赤
+    else {
+      return Colors.red.withOpacity(heatmapOpacity);
     }
   }
 
   // スコアからレベル文字列を取得（修正版）
   String getLevelText(double score) {
-    if (score == 0) return '非常に低い';
-    if (score >= 4.5) return '非常に高い';
-    if (score >= 3.0) return '高い';
-    if (score >= 1.5) return '中程度';
-    if (score > 0) return '低い';
-    return '非常に低い';
+    if (score == 0) return '安全';
+    if (score > 0 && score < 2.0) return '低い';
+    if (score >= 2.0 && score < 4.0) return '中程度';
+    if (score >= 4.0 && score < 5.0) return 'やや高い';
+    if (score >= 5.0) return '高い';
+    return '安全';
   }
 
   // 地図タイプに応じたアイコンを返す
@@ -631,6 +652,15 @@ class _BearMapPageState extends State<BearMapPage> {
                     onTap: (tapPosition, point) {
                       setPin(point);
                     },
+                    // カメラ移動時にポリゴンを再描画
+                    onPositionChanged: (position, hasGesture) {
+                      // ズームやパンが変更された時に再描画をトリガー
+                      if (hasGesture) {
+                        setState(() {
+                          // 状態を更新して再描画
+                        });
+                      }
+                    },
                   ),
                   children: [
                     TileLayer(
@@ -638,25 +668,52 @@ class _BearMapPageState extends State<BearMapPage> {
                       subdomains: tileProviders[selectedTileProvider].subdomains ?? const [],
                       userAgentPackageName: 'com.example.bear_watch',
                     ),
-                    // メッシュデータを表示
-                    PolygonLayer(
-                      polygons: meshDataList.map((data) {
-                        final center = data.latLng;
-                        final halfLat = 2.5 / 60.0 / 2.0;
-                        final halfLng = 3.75 / 60.0 / 2.0;
+                    // // メッシュデータを表示
+                    // PolygonLayer(
+                    //   polygons: meshDataList.map((data) {
+                    //     final center = data.latLng;
+                    //     final halfLat = 2.5 / 60.0 / 2.0;
+                    //     final halfLng = 3.75 / 60.0 / 2.0;
                         
-                        return Polygon(
-                          points: [
-                            LatLng(center.latitude - halfLat, center.longitude - halfLng),
-                            LatLng(center.latitude - halfLat, center.longitude + halfLng),
-                            LatLng(center.latitude + halfLat, center.longitude + halfLng),
-                            LatLng(center.latitude + halfLat, center.longitude - halfLng),
-                          ],
-                          color: getColorForScore(data.score),
-                          borderColor: Colors.black.withOpacity(0.3),
-                          borderStrokeWidth: 0.5,
-                        );
-                      }).toList(),
+                    //     return Polygon(
+                    //       points: [
+                    //         LatLng(center.latitude - halfLat, center.longitude - halfLng),
+                    //         LatLng(center.latitude - halfLat, center.longitude + halfLng),
+                    //         LatLng(center.latitude + halfLat, center.longitude + halfLng),
+                    //         LatLng(center.latitude + halfLat, center.longitude - halfLng),
+                    //       ],
+                    //       color: getColorForScore(data.score),
+                    //       borderColor: Colors.black.withOpacity(0.3),
+                    //       borderStrokeWidth: 0.5,
+                    //     );
+                    //   }).toList(),
+                    // ),
+                    // // メッ
+                    // メッシュデータを表示（パフォーマンス最適化版）
+                    PolygonLayer(
+                      polygons: meshDataList
+                          .where((data) {
+                            // スコアが0のメッシュは描画しない
+                            return data.score > 0;
+                          })
+                          .map((data) {
+                            final center = data.latLng;
+                            final halfLat = 2.5 / 60.0 / 2.0;
+                            final halfLng = 3.75 / 60.0 / 2.0;
+                            
+                            return Polygon(
+                              points: [
+                                LatLng(center.latitude - halfLat, center.longitude - halfLng),
+                                LatLng(center.latitude - halfLat, center.longitude + halfLng),
+                                LatLng(center.latitude + halfLat, center.longitude + halfLng),
+                                LatLng(center.latitude + halfLat, center.longitude - halfLng),
+                              ],
+                              color: getColorForScore(data.score),
+                              borderColor: Colors.black.withOpacity(0.2),
+                              borderStrokeWidth: 0.3,
+                            );
+                          })
+                          .toList(),
                     ),
                     // 選択されたピンレイヤー
                     if (selectedPin != null && (activeInfoType == InfoType.pin || activeInfoType == InfoType.search))
@@ -820,6 +877,208 @@ class _BearMapPageState extends State<BearMapPage> {
                   ),
                 ),
                 
+                // // 地図切り替えボタン
+                // Positioned(
+                //   left: 16,
+                //   top: MediaQuery.of(context).padding.top + 80,
+                //   child: Container(
+                //     decoration: BoxDecoration(
+                //       color: Colors.white,
+                //       borderRadius: BorderRadius.circular(22),
+                //       boxShadow: [
+                //         BoxShadow(
+                //           color: Colors.black.withOpacity(0.1),
+                //           blurRadius: 8,
+                //           offset: const Offset(0, 2),
+                //         ),
+                //       ],
+                //     ),
+                //     child: PopupMenuButton<int>(
+                //       initialValue: selectedTileProvider,
+                //       onSelected: (int value) {
+                //         setState(() {
+                //           selectedTileProvider = value;
+                //         });
+                //       },
+                //       itemBuilder: (context) => tileProviders
+                //           .asMap()
+                //           .entries
+                //           .map((entry) => PopupMenuItem<int>(
+                //                 value: entry.key,
+                //                 child: Row(
+                //                   children: [
+                //                     Icon(
+                //                       _getIconForTileProvider(entry.key),
+                //                       size: 20,
+                //                     ),
+                //                     const SizedBox(width: 8),
+                //                     Text(entry.value.name),
+                //                   ],
+                //                 ),
+                //               ))
+                //           .toList(),
+                //       child: Container(
+                //         padding: const EdgeInsets.all(10),
+                //         child: Icon(_getIconForTileProvider(selectedTileProvider), size: 24),
+                //       ),
+                //     ),
+                //   ),
+                // ),
+                // 
+               // 地図切り替えボタン
+                // Positioned(
+                //   left: 16,
+                //   top: MediaQuery.of(context).padding.top + 80,
+                //   child: Container(
+                //     decoration: BoxDecoration(
+                //       color: Colors.white,
+                //       borderRadius: BorderRadius.circular(22),
+                //       boxShadow: [
+                //         BoxShadow(
+                //           color: Colors.black.withOpacity(0.1),
+                //           blurRadius: 8,
+                //           offset: const Offset(0, 2),
+                //         ),
+                //       ],
+                //     ),
+                //     child: PopupMenuButton<int>(
+                //       initialValue: selectedTileProvider,
+                //       onSelected: (int value) {
+                //         setState(() {
+                //           selectedTileProvider = value;
+                //         });
+                //       },
+                //       itemBuilder: (context) => tileProviders
+                //           .asMap()
+                //           .entries
+                //           .map((entry) => PopupMenuItem<int>(
+                //                 value: entry.key,
+                //                 child: Row(
+                //                   children: [
+                //                     Icon(
+                //                       _getIconForTileProvider(entry.key),
+                //                       size: 20,
+                //                     ),
+                //                     const SizedBox(width: 8),
+                //                     Text(entry.value.name),
+                //                   ],
+                //                 ),
+                //               ))
+                //           .toList(),
+                //       child: Container(
+                //         padding: const EdgeInsets.all(10),
+                //         child: Icon(_getIconForTileProvider(selectedTileProvider), size: 24),
+                //       ),
+                //     ),
+                //   ),
+                // ),
+                
+                // // 透明度調整ボタン（地図切り替えボタンの下）
+                // Positioned(
+                //   left: 16,
+                //   top: MediaQuery.of(context).padding.top + 140,
+                //   child: Column(
+                //     crossAxisAlignment: CrossAxisAlignment.start,
+                //     children: [
+                //       // ボタン本体
+                //       GestureDetector(
+                //         onTap: () {
+                //           setState(() {
+                //             isOpacityPanelOpen = !isOpacityPanelOpen;
+                //           });
+                //         },
+                //         child: Container(
+                //           decoration: BoxDecoration(
+                //             color: Colors.white,
+                //             borderRadius: BorderRadius.circular(22),
+                //             boxShadow: [
+                //               BoxShadow(
+                //                 color: Colors.black.withOpacity(0.1),
+                //                 blurRadius: 8,
+                //                 offset: const Offset(0, 2),
+                //               ),
+                //             ],
+                //           ),
+                //           padding: const EdgeInsets.all(10),
+                //           child: Icon(
+                //             Icons.opacity,
+                //             size: 24,
+                //             color: Colors.black87,
+                //           ),
+                //         ),
+                //       ),
+                      
+                //       // 透明度調整パネル（開いているときのみ表示）
+                //       if (isOpacityPanelOpen)
+                //         Container(
+                //           margin: const EdgeInsets.only(top: 8),
+                //           width: 200,
+                //           padding: const EdgeInsets.all(12),
+                //           decoration: BoxDecoration(
+                //             color: Colors.white,
+                //             borderRadius: BorderRadius.circular(12),
+                //             boxShadow: [
+                //               BoxShadow(
+                //                 color: Colors.black.withOpacity(0.1),
+                //                 blurRadius: 8,
+                //                 offset: const Offset(0, 2),
+                //               ),
+                //             ],
+                //           ),
+                //           child: Column(
+                //             crossAxisAlignment: CrossAxisAlignment.start,
+                //             children: [
+                //               Row(
+                //                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                //                 children: [
+                //                   const Text(
+                //                     '透明度',
+                //                     style: TextStyle(
+                //                       fontSize: 14,
+                //                       fontWeight: FontWeight.w500,
+                //                     ),
+                //                   ),
+                //                   Text(
+                //                     '${(heatmapOpacity * 100).round()}%',
+                //                     style: TextStyle(
+                //                       fontSize: 14,
+                //                       color: Colors.grey.shade600,
+                //                       fontWeight: FontWeight.w500,
+                //                     ),
+                //                   ),
+                //                 ],
+                //               ),
+                //               const SizedBox(height: 8),
+                //               SliderTheme(
+                //                 data: SliderTheme.of(context).copyWith(
+                //                   activeTrackColor: Colors.brown.shade400,
+                //                   inactiveTrackColor: Colors.grey.shade300,
+                //                   thumbColor: Colors.brown.shade600,
+                //                   overlayColor: Colors.brown.withOpacity(0.2),
+                //                   thumbShape: const RoundSliderThumbShape(
+                //                     enabledThumbRadius: 8,
+                //                   ),
+                //                   trackHeight: 4,
+                //                 ),
+                //                 child: Slider(
+                //                   value: heatmapOpacity,
+                //                   min: 0.1,
+                //                   max: 0.9,
+                //                   divisions: 8,
+                //                   onChanged: (value) {
+                //                     setState(() {
+                //                       heatmapOpacity = value;
+                //                     });
+                //                   },
+                //                 ),
+                //               ),
+                //             ],
+                //           ),
+                //         ),
+                //     ],
+                //   ),
+                // ),
+
                 // 地図切り替えボタン
                 Positioned(
                   left: 16,
@@ -865,6 +1124,112 @@ class _BearMapPageState extends State<BearMapPage> {
                         child: Icon(_getIconForTileProvider(selectedTileProvider), size: 24),
                       ),
                     ),
+                  ),
+                ),
+                
+                // 透明度調整ボタン（地図切り替えボタンの下）
+                Positioned(
+                  left: 16,
+                  top: MediaQuery.of(context).padding.top + 140,
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      // ボタン本体
+                      GestureDetector(
+                        onTap: () {
+                          setState(() {
+                            isOpacityPanelOpen = !isOpacityPanelOpen;
+                          });
+                        },
+                        child: Container(
+                          decoration: BoxDecoration(
+                            color: Colors.white,
+                            borderRadius: BorderRadius.circular(22),
+                            boxShadow: [
+                              BoxShadow(
+                                color: Colors.black.withOpacity(0.1),
+                                blurRadius: 8,
+                                offset: const Offset(0, 2),
+                              ),
+                            ],
+                          ),
+                          padding: const EdgeInsets.all(10),
+                          child: Icon(
+                            Icons.opacity,
+                            size: 24,
+                            color: Colors.black87,
+                          ),
+                        ),
+                      ),
+                      
+                      // 透明度調整パネル（開いているときのみ表示）
+                      if (isOpacityPanelOpen)
+                        Container(
+                          margin: const EdgeInsets.only(top: 8),
+                          width: 200,
+                          padding: const EdgeInsets.all(12),
+                          decoration: BoxDecoration(
+                            color: Colors.white,
+                            borderRadius: BorderRadius.circular(12),
+                            boxShadow: [
+                              BoxShadow(
+                                color: Colors.black.withOpacity(0.1),
+                                blurRadius: 8,
+                                offset: const Offset(0, 2),
+                              ),
+                            ],
+                          ),
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Row(
+                                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                                children: [
+                                  const Text(
+                                    '透明度',
+                                    style: TextStyle(
+                                      fontSize: 14,
+                                      fontWeight: FontWeight.w500,
+                                    ),
+                                  ),
+                                  Text(
+                                    '${(heatmapOpacity * 100).round()}%',
+                                    style: TextStyle(
+                                      fontSize: 14,
+                                      color: Colors.grey.shade600,
+                                      fontWeight: FontWeight.w500,
+                                    ),
+                                  ),
+                                ],
+                              ),
+                              const SizedBox(height: 8),
+                              SliderTheme(
+                                data: SliderTheme.of(context).copyWith(
+                                  activeTrackColor: Colors.brown.shade400,
+                                  inactiveTrackColor: Colors.grey.shade300,
+                                  thumbColor: Colors.brown.shade600,
+                                  overlayColor: Colors.brown.withOpacity(0.2),
+                                  thumbShape: const RoundSliderThumbShape(
+                                    enabledThumbRadius: 8,
+                                  ),
+                                  trackHeight: 4,
+                                ),
+                                child: Slider(
+                                  value: heatmapOpacity,
+                                  min: 0.1,
+                                  max: 0.9,
+                                  divisions: 8,
+                                  onChanged: (value) {
+                                    setState(() {
+                                      heatmapOpacity = value;
+                                    });
+                                  },
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                    ],
                   ),
                 ),
                 
@@ -1111,106 +1476,114 @@ class _BearMapPageState extends State<BearMapPage> {
                                         ),
                                         const SizedBox(height: 10),
                                         
-                                        // グラデーションバー（透明を追加）
+                                        // 5段階評価バー
                                         LayoutBuilder(
                                           builder: (context, constraints) {
                                             final barWidth = constraints.maxWidth;
+                                            final segmentWidth = barWidth / 5;
                                             
-                                            // スコアに基づくインジケーターの位置を計算
+                                            // スコアに基づくインジケーター位置を計算
                                             double indicatorPosition = 0;
+                                            int activeSegment = 0;
+                                            
                                             if (_getDisplayMeshData() != null) {
                                               final score = _getDisplayMeshData()!.score;
-                                              // スコア0: 0%, スコア0.01-1.5: 0-30%, スコア1.5-3.0: 30-50%, 
-                                              // スコア3.0-4.5: 50-75%, スコア4.5-5.0: 75-100%
                                               if (score == 0) {
-                                                indicatorPosition = 0;
-                                              } else if (score <= 1.5) {
-                                                indicatorPosition = (score / 1.5) * 0.3 * barWidth;
-                                              } else if (score <= 3.0) {
-                                                indicatorPosition = (0.3 + ((score - 1.5) / 1.5) * 0.2) * barWidth;
-                                              } else if (score <= 4.5) {
-                                                indicatorPosition = (0.5 + ((score - 3.0) / 1.5) * 0.25) * barWidth;
+                                                activeSegment = 0;
+                                                indicatorPosition = segmentWidth * 0.5;
+                                              } else if (score > 0 && score < 2.0) {
+                                                activeSegment = 1;
+                                                indicatorPosition = segmentWidth * 1.5;
+                                              } else if (score >= 2.0 && score < 4.0) {
+                                                activeSegment = 2;
+                                                indicatorPosition = segmentWidth * 2.5;
+                                              } else if (score >= 4.0 && score < 5.0) {
+                                                activeSegment = 3;
+                                                indicatorPosition = segmentWidth * 3.5;
                                               } else {
-                                                indicatorPosition = (0.75 + ((score - 4.5) / 0.5) * 0.25) * barWidth;
+                                                activeSegment = 4;
+                                                indicatorPosition = segmentWidth * 4.5;
                                               }
                                             }
                                             
-                                            return Stack(
+                                            return Column(
                                               children: [
-                                                // 背景の枠線
-                                                Container(
-                                                  height: 24,
-                                                  decoration: BoxDecoration(
-                                                    border: Border.all(color: Colors.grey.shade300),
-                                                    borderRadius: BorderRadius.circular(12),
-                                                  ),
-                                                ),
-                                                // グラデーション（透明から赤へ）
-                                                Container(
-                                                  height: 24,
-                                                  decoration: BoxDecoration(
-                                                    gradient: LinearGradient(
-                                                      colors: [
-                                                        Colors.grey.shade200.withOpacity(0.3),  // 透明を表現
-                                                        Colors.green.withOpacity(0.8),
-                                                        Colors.yellow,
-                                                        Colors.orange,
-                                                        Colors.red.shade900,
-                                                      ],
-                                                      stops: const [0.0, 0.3, 0.5, 0.75, 1.0],
-                                                    ),
-                                                    borderRadius: BorderRadius.circular(12),
-                                                    boxShadow: [
-                                                      BoxShadow(
-                                                        color: Colors.black.withOpacity(0.1),
-                                                        blurRadius: 4,
-                                                        offset: const Offset(0, 2),
-                                                      ),
-                                                    ],
-                                                  ),
-                                                ),
-                                                // インジケーター位置
-                                                if (_getDisplayMeshData() != null)
-                                                  Positioned(
-                                                    left: indicatorPosition.clamp(2, barWidth - 6),
-                                                    top: -4,
-                                                    child: Container(
-                                                      width: 4,
-                                                      height: 32,
-                                                      decoration: BoxDecoration(
-                                                        color: Colors.black,
-                                                        borderRadius: BorderRadius.circular(2),
-                                                        boxShadow: [
-                                                          BoxShadow(
-                                                            color: Colors.black.withOpacity(0.3),
-                                                            blurRadius: 4,
+                                                // 5段階のセグメントバー
+                                                Row(
+                                                  children: List.generate(5, (index) {
+                                                    Color segmentColor;
+                                                    bool isActive = index == activeSegment;
+                                                    
+                                                    switch (index) {
+                                                      case 0:
+                                                        segmentColor = Colors.cyan;
+                                                        break;
+                                                      case 1:
+                                                        segmentColor = Colors.green;
+                                                        break;
+                                                      case 2:
+                                                        segmentColor = Colors.yellow.shade700;
+                                                        break;
+                                                      case 3:
+                                                        segmentColor = Colors.orange;
+                                                        break;
+                                                      case 4:
+                                                        segmentColor = Colors.red;
+                                                        break;
+                                                      default:
+                                                        segmentColor = Colors.grey;
+                                                    }
+                                                    
+                                                    return Expanded(
+                                                      child: Container(
+                                                        height: 24,
+                                                        margin: EdgeInsets.only(
+                                                          left: index == 0 ? 0 : 1,
+                                                        ),
+                                                        decoration: BoxDecoration(
+                                                          color: isActive 
+                                                              ? segmentColor 
+                                                              : segmentColor.withOpacity(0.2),
+                                                          borderRadius: BorderRadius.only(
+                                                            topLeft: index == 0 
+                                                                ? const Radius.circular(12) 
+                                                                : Radius.zero,
+                                                            bottomLeft: index == 0 
+                                                                ? const Radius.circular(12) 
+                                                                : Radius.zero,
+                                                            topRight: index == 4 
+                                                                ? const Radius.circular(12) 
+                                                                : Radius.zero,
+                                                            bottomRight: index == 4 
+                                                                ? const Radius.circular(12) 
+                                                                : Radius.zero,
                                                           ),
-                                                        ],
+                                                          border: Border.all(
+                                                            color: isActive 
+                                                                ? segmentColor.withOpacity(0.8)
+                                                                : Colors.grey.shade300,
+                                                            width: isActive ? 2 : 1,
+                                                          ),
+                                                        ),
                                                       ),
-                                                    ),
-                                                  ),
+                                                    );
+                                                  }),
+                                                ),
+                                                const SizedBox(height: 6),
+                                                // ラベル
+                                                Row(
+                                                  mainAxisAlignment: MainAxisAlignment.spaceAround,
+                                                  children: const [
+                                                    Text('安全', style: TextStyle(fontSize: 11, color: Colors.grey)),
+                                                    Text('低い', style: TextStyle(fontSize: 11, color: Colors.grey)),
+                                                    Text('中程度', style: TextStyle(fontSize: 11, color: Colors.grey)),
+                                                    Text('やや高い', style: TextStyle(fontSize: 11, color: Colors.grey)),
+                                                    Text('高い', style: TextStyle(fontSize: 11, color: Colors.grey)),
+                                                  ],
+                                                ),
                                               ],
                                             );
                                           },
-                                        ),
-                                        const SizedBox(height: 6),
-                                        // ラベル（修正版）
-                                        Row(
-                                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                                          children: const [
-                                            Text('非常に低い', style: TextStyle(fontSize: 11, color: Colors.grey)),
-                                            Expanded(
-                                              child: Row(
-                                                mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                                                children: [
-                                                  Text('低い', style: TextStyle(fontSize: 11, color: Colors.grey)),
-                                                  Text('中程度', style: TextStyle(fontSize: 11, color: Colors.grey)),
-                                                  Text('高い', style: TextStyle(fontSize: 11, color: Colors.grey)),
-                                                ],
-                                              ),
-                                            ),
-                                            Text('非常に高い', style: TextStyle(fontSize: 11, color: Colors.grey)),
-                                          ],
                                         ),
                                         const SizedBox(height: 10),
                                         
@@ -1224,26 +1597,37 @@ class _BearMapPageState extends State<BearMapPage> {
                                                   style: TextStyle(
                                                     fontSize: 20,
                                                     fontWeight: FontWeight.bold,
-                                                    color: _getDisplayMeshData()!.score >= 3.0 
-                                                        ? Colors.red 
-                                                        : _getDisplayMeshData()!.score >= 1.5 
-                                                            ? Colors.orange 
-                                                            : _getDisplayMeshData()!.score > 0
-                                                                ? Colors.green
-                                                                : Colors.blue,
+                                                    color: _getDisplayMeshData()!.score == 0
+                                                        ? Colors.cyan
+                                                        : _getDisplayMeshData()!.score < 2.0
+                                                            ? Colors.green
+                                                            : _getDisplayMeshData()!.score < 4.0
+                                                                ? Colors.yellow.shade700
+                                                                : _getDisplayMeshData()!.score < 5.0
+                                                                    ? Colors.orange
+                                                                    : Colors.red,
+                                                  ),
+                                                ),
+                                                const SizedBox(height: 4),
+                                                // デバッグ用：実際のスコア値を表示
+                                                Text(
+                                                  'スコア: ${_getDisplayMeshData()!.score.toStringAsFixed(2)}',
+                                                  style: const TextStyle(
+                                                    fontSize: 12,
+                                                    color: Colors.grey,
                                                   ),
                                                 ),
                                                 const SizedBox(height: 4),
                                                 Text(
-                                                  _getDisplayMeshData()!.score >= 4.5
-                                                      ? '最近,クマ出没の報告が多い地域です'
-                                                      : _getDisplayMeshData()!.score >= 3.0
-                                                          ? '最近,クマ出没の報告がある地域です'
-                                                          : _getDisplayMeshData()!.score >= 1.5
+                                                  _getDisplayMeshData()!.score == 0
+                                                      ? 'クマ出没の報告がない地域です'
+                                                      : _getDisplayMeshData()!.score < 2.0
+                                                          ? 'クマ出没の報告は少ない地域です'
+                                                          : _getDisplayMeshData()!.score < 4.0
                                                               ? 'クマ出没の報告がある地域です'
-                                                              : _getDisplayMeshData()!.score > 0
-                                                                  ? 'クマ出没の報告は少ない地域です'
-                                                                  : 'クマ出没の報告がない地域です',
+                                                              : _getDisplayMeshData()!.score < 5.0
+                                                                  ? '最近、クマ出没の報告がある地域です'
+                                                                  : '最近、クマ出没の報告が多い地域です',
                                                   style: const TextStyle(fontSize: 14, color: Colors.grey),
                                                   textAlign: TextAlign.center,
                                                 ),
@@ -1258,72 +1642,6 @@ class _BearMapPageState extends State<BearMapPage> {
                                             ),
                                           ),
                                         ],
-                                      ],
-                                    ),
-                                  ),
-                                  
-                                  const SizedBox(height: 12),
-                                  
-                                  // マップ透明度調整
-                                  Container(
-                                    padding: const EdgeInsets.all(12),
-                                    decoration: BoxDecoration(
-                                      color: Colors.grey.shade50,
-                                      borderRadius: BorderRadius.circular(12),
-                                      border: Border.all(color: Colors.grey.shade200),
-                                    ),
-                                    child: Column(
-                                      crossAxisAlignment: CrossAxisAlignment.start,
-                                      children: [
-                                        Row(
-                                          children: [
-                                            Icon(Icons.layers, size: 16, color: Colors.grey.shade700),
-                                            const SizedBox(width: 8),
-                                            Text(
-                                              'ヒートマップの透明度',
-                                              style: TextStyle(
-                                                fontSize: 14,
-                                                fontWeight: FontWeight.w500,
-                                                color: Colors.grey.shade700,
-                                              ),
-                                            ),
-                                            const Spacer(),
-                                            Container(
-                                              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
-                                              decoration: BoxDecoration(
-                                                color: Colors.white,
-                                                borderRadius: BorderRadius.circular(8),
-                                              ),
-                                              child: Text(
-                                                '${(heatmapOpacity * 100).round()}%',
-                                                style: const TextStyle(
-                                                  fontSize: 13,
-                                                  fontWeight: FontWeight.bold,
-                                                ),
-                                              ),
-                                            ),
-                                          ],
-                                        ),
-                                        const SizedBox(height: 8),
-                                        Row(
-                                          children: [
-                                            Text('薄い', style: TextStyle(fontSize: 11, color: Colors.grey.shade600)),
-                                            Expanded(
-                                              child: Slider(
-                                                value: heatmapOpacity,
-                                                min: 0.1,
-                                                max: 0.9,
-                                                activeColor: Colors.orange,
-                                                onChanged: (value) {
-                                                  setState(() {
-                                                    heatmapOpacity = value;
-                                                  });
-                                                },
-                                              ),
-                                            ),
-                                            Text('濃い', style: TextStyle(fontSize: 11, color: Colors.grey.shade600)),
-                                          ],
-                                        ),
                                       ],
                                     ),
                                   ),
