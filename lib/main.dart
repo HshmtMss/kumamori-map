@@ -6,6 +6,7 @@ import 'package:latlong2/latlong.dart';
 import 'package:geolocator/geolocator.dart';
 import 'package:http/http.dart' as http;
 import 'package:url_launcher/url_launcher.dart';
+import 'package:flutter_localizations/flutter_localizations.dart';
 import 'dart:convert';
 import 'dart:math' as math;
 
@@ -23,7 +24,19 @@ class MyApp extends StatelessWidget {
       theme: ThemeData(
         colorScheme: ColorScheme.fromSeed(seedColor: Colors.brown),
         useMaterial3: true,
+        fontFamily: 'Hiragino Sans', // macOS標準の日本語フォント
+        // または 'Yu Gothic UI', 'Meiryo', 'MS Gothic' など
       ),
+      // 日本語ロケール設定
+      locale: const Locale('ja', 'JP'),
+      localizationsDelegates: const [
+        GlobalMaterialLocalizations.delegate,
+        GlobalWidgetsLocalizations.delegate,
+        GlobalCupertinoLocalizations.delegate,
+      ],
+      supportedLocales: const [
+        Locale('ja', 'JP'), // 日本語
+      ],
       home: const BearMapPage(),
     );
   }
@@ -381,65 +394,35 @@ class _BearMapPageState extends State<BearMapPage> {
         
         final values = line.split(',').map((e) => e.trim()).toList();
         
-      //   if (values.length >= 5) {
-      //     final meshCode = values[0];
-      //     final second = int.tryParse(values[1]) ?? 0;
-      //     final sixth = int.tryParse(values[2]) ?? 0;
-      //     final latest = int.tryParse(values[3]) ?? 0;
-      //     final latestSingle = int.tryParse(values[4]) ?? 0;
+        if (values.length >= 5) {
+          final meshCode = values[0];
+          final second = int.tryParse(values[1]) ?? 0;
+          final sixth = int.tryParse(values[2]) ?? 0;
+          final latest = int.tryParse(values[3]) ?? 0;
+          final latestSingle = int.tryParse(values[4]) ?? 0;
           
-      //     double score = calculateScore(second, sixth, latest, latestSingle);
+          double score = calculateScore(second, sixth, latest, latestSingle);
           
-      //     final latLng = meshCodeToLatLng(meshCode);
-      //     if (latLng != null) {
-      //       final meshData = MeshData(
-      //         meshCode: meshCode,
-      //         latLng: latLng,
-      //         score: score,
-      //         originalScore: score,
-      //         second: second,
-      //         sixth: sixth,
-      //         latest: latest,
-      //         latestSingle: latestSingle,
-      //       );
-      //       tempList.add(meshData);
-      //       meshMap[meshCode] = meshData;
-      //       validMeshCount++;
-      //     } else {
-      //       invalidMeshCount++;
-      //     }
-      //   }
-      // }
-      if (values.length >= 5) {
-        final meshCode = values[0];
-        final second = int.tryParse(values[1]) ?? 0;
-        final sixth = int.tryParse(values[2]) ?? 0;
-        final latest = int.tryParse(values[3]) ?? 0;
-        final latestSingle = int.tryParse(values[4]) ?? 0;
-        
-        double score = calculateScore(second, sixth, latest, latestSingle);
-        
-        // スコアが0より大きいメッシュのみを処理（パフォーマンス改善）
-        // スコアが0より大きいメッシュのみを処理（パフォーマンス改善）
-        if (score > 0) {
-          final latLng = meshCodeToLatLng(meshCode);
-          if (latLng != null) {
-            final meshData = MeshData(
-              meshCode: meshCode,
-              latLng: latLng,
-              score: score,
-              originalScore: score,
-              second: second,
-              sixth: sixth,
-              latest: latest,
-              latestSingle: latestSingle,
-            );
-            tempList.add(meshData);
-            meshMap[meshCode] = meshData;
+          // スコアが0より大きいメッシュのみを処理（パフォーマンス改善）
+          if (score > 0) {
+            final latLng = meshCodeToLatLng(meshCode);
+            if (latLng != null) {
+              final meshData = MeshData(
+                meshCode: meshCode,
+                latLng: latLng,
+                score: score,
+                originalScore: score,
+                second: second,
+                sixth: sixth,
+                latest: latest,
+                latestSingle: latestSingle,
+              );
+              tempList.add(meshData);
+              meshMap[meshCode] = meshData;
+            }
           }
         }
-        }  // ← この閉じ括弧を追加（values.length >= 5 のif文を閉じる）
-        }  // ← この閉じ括弧を追加（forループを閉じる）
+      }
       
       // 第2パス：周囲メッシュを考慮したスコア調整
       for (var meshData in tempList) {
@@ -584,7 +567,7 @@ class _BearMapPageState extends State<BearMapPage> {
       return Colors.transparent;
     }
     
-    // 0より大きく2未満: 緑
+    // 0より大き2未満: 緑
     if (score > 0 && score < 2.0) {
       return Colors.green.withOpacity(heatmapOpacity);
     } 
@@ -624,6 +607,274 @@ class _BearMapPageState extends State<BearMapPage> {
       default:
         return Icons.map;
     }
+  }
+
+  // ご利用にあたってダイアログを表示
+  void _showUsageDialog(BuildContext context) {
+    showDialog(
+      context: context,
+      builder: (BuildContext context) {
+        return AlertDialog(
+          title: Row(
+            children: [
+              Icon(Icons.info_outline, color: Colors.brown.shade700),
+              const SizedBox(width: 8),
+              Text('ご利用にあたって'),
+            ],
+          ),
+          content: SingleChildScrollView(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Text(
+                  'データについて',
+                  style: TextStyle(
+                    fontSize: 16,
+                    fontWeight: FontWeight.bold,
+                    color: Colors.brown.shade800,
+                  ),
+                ),
+                const SizedBox(height: 8),
+                Text(
+                  '本マップは環境省の公開データ等を基に作成しています。5kmメッシュ単位でのクマ出没危険度を可視化し、地域の参考情報としてご活用いただけます。',
+                  style: TextStyle(
+                    fontSize: 14,
+                    color: Colors.grey.shade700,
+                    height: 1.5,
+                  ),
+                ),
+                const SizedBox(height: 16),
+                Text(
+                  'ご注意事項',
+                  style: TextStyle(
+                    fontSize: 16,
+                    fontWeight: FontWeight.bold,
+                    color: Colors.brown.shade800,
+                  ),
+                ),
+                const SizedBox(height: 8),
+                Text(
+                  '• 実際の状況は日々変化する可能性があります\n'
+                  '• 本アプリの情報は参考情報として利用してください\n'
+                  '• 最新の情報は各自治体や関係機関にご確認ください\n'
+                  '• 野生動物との遭遇には十分ご注意ください',
+                  style: TextStyle(
+                    fontSize: 14,
+                    color: Colors.grey.shade700,
+                    height: 1.5,
+                  ),
+                ),
+                const SizedBox(height: 16),
+                Text(
+                  'お問い合わせ',
+                  style: TextStyle(
+                    fontSize: 16,
+                    fontWeight: FontWeight.bold,
+                    color: Colors.brown.shade800,
+                  ),
+                ),
+                const SizedBox(height: 8),
+                Text(
+                  'リサーチコーディネート株式会社',
+                  style: TextStyle(
+                    fontSize: 14,
+                    fontWeight: FontWeight.w500,
+                    color: Colors.grey.shade700,
+                  ),
+                ),
+                const SizedBox(height: 4),
+                Text(
+                  '東京都新宿区西新宿1-20-3 西新宿高木ビル8F',
+                  style: TextStyle(
+                    fontSize: 13,
+                    color: Colors.grey.shade600,
+                  ),
+                ),
+                const SizedBox(height: 8),
+                GestureDetector(
+                  onTap: () async {
+                    final Uri url = Uri.parse('https://www.research-coordinate.co.jp');
+                    if (await canLaunchUrl(url)) {
+                      await launchUrl(url, mode: LaunchMode.externalApplication);
+                    }
+                  },
+                  child: Text(
+                    'https://www.research-coordinate.co.jp',
+                    style: TextStyle(
+                      fontSize: 13,
+                      color: Colors.blue.shade600,
+                      decoration: TextDecoration.underline,
+                    ),
+                  ),
+                ),
+                const SizedBox(height: 4),
+                GestureDetector(
+                  onTap: () async {
+                    final Uri emailUri = Uri(
+                      scheme: 'mailto',
+                      path: 'contact@research-coordinate.co.jp',
+                      query: 'subject=くまもりマップについて',
+                    );
+                    if (await canLaunchUrl(emailUri)) {
+                      await launchUrl(emailUri);
+                    }
+                  },
+                  child: Text(
+                    'contact@research-coordinate.co.jp',
+                    style: TextStyle(
+                      fontSize: 13,
+                      color: Colors.blue.shade600,
+                      decoration: TextDecoration.underline,
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.of(context).pop(),
+              child: Text('閉じる'),
+            ),
+          ],
+        );
+      },
+    );
+  }
+
+  // 自治体向けダイアログを表示
+  void _showMunicipalDialog(BuildContext context) {
+    showDialog(
+      context: context,
+      builder: (BuildContext context) {
+        return AlertDialog(
+          title: Row(
+            children: [
+              Icon(Icons.business, color: Colors.blue.shade700),
+              const SizedBox(width: 8),
+              Text('自治体の皆様へ'),
+            ],
+          ),
+          content: SingleChildScrollView(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Text(
+                  'より詳細な地域データで住民・観光客の安全を',
+                  style: TextStyle(
+                    fontSize: 16,
+                    fontWeight: FontWeight.bold,
+                    color: Colors.blue.shade800,
+                  ),
+                ),
+                const SizedBox(height: 12),
+                Text(
+                  '現在のマップは環境省の全国データを使用していますが、自治体様との連携により、より詳細で正確な地域情報の提供が可能です。',
+                  style: TextStyle(
+                    fontSize: 14,
+                    color: Colors.grey.shade700,
+                    height: 1.5,
+                  ),
+                ),
+                const SizedBox(height: 16),
+                Text(
+                  '連携メリット',
+                  style: TextStyle(
+                    fontSize: 16,
+                    fontWeight: FontWeight.bold,
+                    color: Colors.blue.shade800,
+                  ),
+                ),
+                const SizedBox(height: 8),
+                Text(
+                  '• リアルタイムでの出没情報更新\n'
+                  '• より細かい地域単位での危険度表示\n'
+                  '• 住民・観光客への効果的な注意喚起\n'
+                  '• 地域に特化したカスタマイズ対応',
+                  style: TextStyle(
+                    fontSize: 14,
+                    color: Colors.grey.shade700,
+                    height: 1.5,
+                  ),
+                ),
+                const SizedBox(height: 16),
+                Text(
+                  'お問い合わせ',
+                  style: TextStyle(
+                    fontSize: 16,
+                    fontWeight: FontWeight.bold,
+                    color: Colors.blue.shade800,
+                  ),
+                ),
+                const SizedBox(height: 8),
+                Text(
+                  'リサーチコーディネート株式会社',
+                  style: TextStyle(
+                    fontSize: 14,
+                    fontWeight: FontWeight.w500,
+                    color: Colors.grey.shade700,
+                  ),
+                ),
+                const SizedBox(height: 4),
+                Text(
+                  '東京都新宿区西新宿1-20-3 西新宿高木ビル8F',
+                  style: TextStyle(
+                    fontSize: 13,
+                    color: Colors.grey.shade600,
+                  ),
+                ),
+                const SizedBox(height: 8),
+                GestureDetector(
+                  onTap: () async {
+                    final Uri url = Uri.parse('https://www.research-coordinate.co.jp');
+                    if (await canLaunchUrl(url)) {
+                      await launchUrl(url, mode: LaunchMode.externalApplication);
+                    }
+                  },
+                  child: Text(
+                    'https://www.research-coordinate.co.jp',
+                    style: TextStyle(
+                      fontSize: 13,
+                      color: Colors.blue.shade600,
+                      decoration: TextDecoration.underline,
+                    ),
+                  ),
+                ),
+                const SizedBox(height: 4),
+                GestureDetector(
+                  onTap: () async {
+                    final Uri emailUri = Uri(
+                      scheme: 'mailto',
+                      path: 'contact@research-coordinate.co.jp',
+                      query: 'subject=自治体連携について',
+                    );
+                    if (await canLaunchUrl(emailUri)) {
+                      await launchUrl(emailUri);
+                    }
+                  },
+                  child: Text(
+                    'contact@research-coordinate.co.jp',
+                    style: TextStyle(
+                      fontSize: 13,
+                      color: Colors.blue.shade600,
+                      decoration: TextDecoration.underline,
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.of(context).pop(),
+              child: Text('閉じる'),
+            ),
+          ],
+        );
+      },
+    );
   }
 
   @override
@@ -668,27 +919,6 @@ class _BearMapPageState extends State<BearMapPage> {
                       subdomains: tileProviders[selectedTileProvider].subdomains ?? const [],
                       userAgentPackageName: 'com.example.bear_watch',
                     ),
-                    // // メッシュデータを表示
-                    // PolygonLayer(
-                    //   polygons: meshDataList.map((data) {
-                    //     final center = data.latLng;
-                    //     final halfLat = 2.5 / 60.0 / 2.0;
-                    //     final halfLng = 3.75 / 60.0 / 2.0;
-                        
-                    //     return Polygon(
-                    //       points: [
-                    //         LatLng(center.latitude - halfLat, center.longitude - halfLng),
-                    //         LatLng(center.latitude - halfLat, center.longitude + halfLng),
-                    //         LatLng(center.latitude + halfLat, center.longitude + halfLng),
-                    //         LatLng(center.latitude + halfLat, center.longitude - halfLng),
-                    //       ],
-                    //       color: getColorForScore(data.score),
-                    //       borderColor: Colors.black.withOpacity(0.3),
-                    //       borderStrokeWidth: 0.5,
-                    //     );
-                    //   }).toList(),
-                    // ),
-                    // // メッ
                     // メッシュデータを表示（パフォーマンス最適化版）
                     PolygonLayer(
                       polygons: meshDataList
@@ -877,208 +1107,6 @@ class _BearMapPageState extends State<BearMapPage> {
                   ),
                 ),
                 
-                // // 地図切り替えボタン
-                // Positioned(
-                //   left: 16,
-                //   top: MediaQuery.of(context).padding.top + 80,
-                //   child: Container(
-                //     decoration: BoxDecoration(
-                //       color: Colors.white,
-                //       borderRadius: BorderRadius.circular(22),
-                //       boxShadow: [
-                //         BoxShadow(
-                //           color: Colors.black.withOpacity(0.1),
-                //           blurRadius: 8,
-                //           offset: const Offset(0, 2),
-                //         ),
-                //       ],
-                //     ),
-                //     child: PopupMenuButton<int>(
-                //       initialValue: selectedTileProvider,
-                //       onSelected: (int value) {
-                //         setState(() {
-                //           selectedTileProvider = value;
-                //         });
-                //       },
-                //       itemBuilder: (context) => tileProviders
-                //           .asMap()
-                //           .entries
-                //           .map((entry) => PopupMenuItem<int>(
-                //                 value: entry.key,
-                //                 child: Row(
-                //                   children: [
-                //                     Icon(
-                //                       _getIconForTileProvider(entry.key),
-                //                       size: 20,
-                //                     ),
-                //                     const SizedBox(width: 8),
-                //                     Text(entry.value.name),
-                //                   ],
-                //                 ),
-                //               ))
-                //           .toList(),
-                //       child: Container(
-                //         padding: const EdgeInsets.all(10),
-                //         child: Icon(_getIconForTileProvider(selectedTileProvider), size: 24),
-                //       ),
-                //     ),
-                //   ),
-                // ),
-                // 
-               // 地図切り替えボタン
-                // Positioned(
-                //   left: 16,
-                //   top: MediaQuery.of(context).padding.top + 80,
-                //   child: Container(
-                //     decoration: BoxDecoration(
-                //       color: Colors.white,
-                //       borderRadius: BorderRadius.circular(22),
-                //       boxShadow: [
-                //         BoxShadow(
-                //           color: Colors.black.withOpacity(0.1),
-                //           blurRadius: 8,
-                //           offset: const Offset(0, 2),
-                //         ),
-                //       ],
-                //     ),
-                //     child: PopupMenuButton<int>(
-                //       initialValue: selectedTileProvider,
-                //       onSelected: (int value) {
-                //         setState(() {
-                //           selectedTileProvider = value;
-                //         });
-                //       },
-                //       itemBuilder: (context) => tileProviders
-                //           .asMap()
-                //           .entries
-                //           .map((entry) => PopupMenuItem<int>(
-                //                 value: entry.key,
-                //                 child: Row(
-                //                   children: [
-                //                     Icon(
-                //                       _getIconForTileProvider(entry.key),
-                //                       size: 20,
-                //                     ),
-                //                     const SizedBox(width: 8),
-                //                     Text(entry.value.name),
-                //                   ],
-                //                 ),
-                //               ))
-                //           .toList(),
-                //       child: Container(
-                //         padding: const EdgeInsets.all(10),
-                //         child: Icon(_getIconForTileProvider(selectedTileProvider), size: 24),
-                //       ),
-                //     ),
-                //   ),
-                // ),
-                
-                // // 透明度調整ボタン（地図切り替えボタンの下）
-                // Positioned(
-                //   left: 16,
-                //   top: MediaQuery.of(context).padding.top + 140,
-                //   child: Column(
-                //     crossAxisAlignment: CrossAxisAlignment.start,
-                //     children: [
-                //       // ボタン本体
-                //       GestureDetector(
-                //         onTap: () {
-                //           setState(() {
-                //             isOpacityPanelOpen = !isOpacityPanelOpen;
-                //           });
-                //         },
-                //         child: Container(
-                //           decoration: BoxDecoration(
-                //             color: Colors.white,
-                //             borderRadius: BorderRadius.circular(22),
-                //             boxShadow: [
-                //               BoxShadow(
-                //                 color: Colors.black.withOpacity(0.1),
-                //                 blurRadius: 8,
-                //                 offset: const Offset(0, 2),
-                //               ),
-                //             ],
-                //           ),
-                //           padding: const EdgeInsets.all(10),
-                //           child: Icon(
-                //             Icons.opacity,
-                //             size: 24,
-                //             color: Colors.black87,
-                //           ),
-                //         ),
-                //       ),
-                      
-                //       // 透明度調整パネル（開いているときのみ表示）
-                //       if (isOpacityPanelOpen)
-                //         Container(
-                //           margin: const EdgeInsets.only(top: 8),
-                //           width: 200,
-                //           padding: const EdgeInsets.all(12),
-                //           decoration: BoxDecoration(
-                //             color: Colors.white,
-                //             borderRadius: BorderRadius.circular(12),
-                //             boxShadow: [
-                //               BoxShadow(
-                //                 color: Colors.black.withOpacity(0.1),
-                //                 blurRadius: 8,
-                //                 offset: const Offset(0, 2),
-                //               ),
-                //             ],
-                //           ),
-                //           child: Column(
-                //             crossAxisAlignment: CrossAxisAlignment.start,
-                //             children: [
-                //               Row(
-                //                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                //                 children: [
-                //                   const Text(
-                //                     '透明度',
-                //                     style: TextStyle(
-                //                       fontSize: 14,
-                //                       fontWeight: FontWeight.w500,
-                //                     ),
-                //                   ),
-                //                   Text(
-                //                     '${(heatmapOpacity * 100).round()}%',
-                //                     style: TextStyle(
-                //                       fontSize: 14,
-                //                       color: Colors.grey.shade600,
-                //                       fontWeight: FontWeight.w500,
-                //                     ),
-                //                   ),
-                //                 ],
-                //               ),
-                //               const SizedBox(height: 8),
-                //               SliderTheme(
-                //                 data: SliderTheme.of(context).copyWith(
-                //                   activeTrackColor: Colors.brown.shade400,
-                //                   inactiveTrackColor: Colors.grey.shade300,
-                //                   thumbColor: Colors.brown.shade600,
-                //                   overlayColor: Colors.brown.withOpacity(0.2),
-                //                   thumbShape: const RoundSliderThumbShape(
-                //                     enabledThumbRadius: 8,
-                //                   ),
-                //                   trackHeight: 4,
-                //                 ),
-                //                 child: Slider(
-                //                   value: heatmapOpacity,
-                //                   min: 0.1,
-                //                   max: 0.9,
-                //                   divisions: 8,
-                //                   onChanged: (value) {
-                //                     setState(() {
-                //                       heatmapOpacity = value;
-                //                     });
-                //                   },
-                //                 ),
-                //               ),
-                //             ],
-                //           ),
-                //         ),
-                //     ],
-                //   ),
-                // ),
-
                 // 地図切り替えボタン
                 Positioned(
                   left: 16,
@@ -1646,186 +1674,37 @@ class _BearMapPageState extends State<BearMapPage> {
                                     ),
                                   ),
                                   
-                                  const SizedBox(height: 12),
+                                  const SizedBox(height: 16),
                                   
-                                  // お知らせカード（ボトムシート内に移動）
-                                  Container(
-                                    padding: const EdgeInsets.all(14),
-                                    decoration: BoxDecoration(
-                                      gradient: LinearGradient(
-                                        colors: [Colors.orange.shade50, Colors.orange.shade100],
-                                        begin: Alignment.topLeft,
-                                        end: Alignment.bottomRight,
+                                  // 情報へのリンクボタン
+                                  Row(
+                                    children: [
+                                      Expanded(
+                                        child: OutlinedButton.icon(
+                                          onPressed: () => _showUsageDialog(context),
+                                          icon: Icon(Icons.info_outline, size: 18),
+                                          label: Text('ご利用にあたって'),
+                                          style: OutlinedButton.styleFrom(
+                                            padding: EdgeInsets.symmetric(vertical: 12),
+                                            side: BorderSide(color: Colors.brown.shade300),
+                                            foregroundColor: Colors.brown.shade700,
+                                          ),
+                                        ),
                                       ),
-                                      borderRadius: BorderRadius.circular(16),
-                                      border: Border.all(color: Colors.orange.shade200, width: 0.5),
-                                    ),
-                                    child: Row(
-                                      crossAxisAlignment: CrossAxisAlignment.start,
-                                      children: [
-                                        Icon(
-                                          Icons.info_outline,
-                                          color: Colors.brown.shade700,
-                                          size: 22,
-                                        ),
-                                        const SizedBox(width: 12),
-                                        Expanded(
-                                          child: Column(
-                                            crossAxisAlignment: CrossAxisAlignment.start,
-                                            children: [
-                                              Text(
-                                                'ご利用にあたって',
-                                                style: TextStyle(
-                                                  fontSize: 16,
-                                                  fontWeight: FontWeight.bold,
-                                                  color: Colors.brown.shade800,
-                                                ),
-                                              ),
-                                              const SizedBox(height: 6),
-                                              Text(
-                                                '本マップは環境省の公開データ等を基に作成しています。'
-                                                '地域の参考情報としてお役立てください。'
-                                                'なお、実際の状況は変化する可能性がありますのでご留意ください。',
-                                                style: TextStyle(
-                                                  fontSize: 14,
-                                                  color: Colors.brown.shade700,
-                                                  height: 1.5,
-                                                ),
-                                              ),
-                                            ],
+                                      const SizedBox(width: 12),
+                                      Expanded(
+                                        child: OutlinedButton.icon(
+                                          onPressed: () => _showMunicipalDialog(context),
+                                          icon: Icon(Icons.business, size: 18),
+                                          label: Text('自治体の皆様へ'),
+                                          style: OutlinedButton.styleFrom(
+                                            padding: EdgeInsets.symmetric(vertical: 12),
+                                            side: BorderSide(color: Colors.blue.shade300),
+                                            foregroundColor: Colors.blue.shade700,
                                           ),
                                         ),
-                                      ],
-                                    ),
-                                  ),
-                                  
-                                  const SizedBox(height: 20),
-                                  
-                                  // 自治体向けセクション
-                                  Container(
-                                    width: double.infinity,
-                                    padding: const EdgeInsets.all(16),
-                                    margin: const EdgeInsets.only(top: 12),
-                                    decoration: BoxDecoration(
-                                      color: Colors.grey.shade50,
-                                      borderRadius: BorderRadius.circular(12),
-                                      border: Border.all(color: Colors.grey.shade200),
-                                    ),
-                                    child: Column(
-                                      crossAxisAlignment: CrossAxisAlignment.center,
-                                      children: [
-                                        Text(
-                                          '自治体の皆様へ',
-                                          style: TextStyle(
-                                            fontSize: 16,
-                                            fontWeight: FontWeight.bold,
-                                            color: Colors.grey.shade800,
-                                          ),
-                                        ),
-                                        const SizedBox(height: 8),
-                                        Text(
-                                          'より詳細な地域データで住民・観光客の安全を.',
-                                          style: TextStyle(
-                                            fontSize: 14,
-                                            color: Colors.grey.shade700,
-                                          ),
-                                        ),
-                                        const SizedBox(height: 4),
-                                        Text(
-                                          '連携いただける自治体様を募集しています.',
-                                          style: TextStyle(
-                                            fontSize: 14,
-                                            color: Colors.grey.shade700,
-                                          ),
-                                        ),
-                                        const SizedBox(height: 4),
-                                        Text(
-                                          'お気軽にお問い合わせください.',
-                                          style: TextStyle(
-                                            fontSize: 14,
-                                            color: Colors.grey.shade700,
-                                          ),
-                                        ),
-                                        const SizedBox(height: 12),
-                                        
-                                        // お問い合わせ情報
-                                        Container(
-                                          padding: const EdgeInsets.all(12),
-                                          decoration: BoxDecoration(
-                                            color: Colors.white,
-                                            borderRadius: BorderRadius.circular(8),
-                                            border: Border.all(color: Colors.grey.shade300),
-                                          ),
-                                          child: Column(
-                                            children: [
-                                              Text(
-                                                'お問い合わせ',
-                                                style: TextStyle(
-                                                  fontSize: 14,
-                                                  fontWeight: FontWeight.w600,
-                                                  color: Colors.grey.shade700,
-                                                ),
-                                              ),
-                                              const SizedBox(height: 8),
-                                              Text(
-                                                'リサーチコーディネート株式会社',
-                                                style: TextStyle(
-                                                  fontSize: 14,
-                                                  fontWeight: FontWeight.w500,
-                                                  color: Colors.grey.shade700,
-                                                ),
-                                              ),
-                                              const SizedBox(height: 4),
-                                              Text(
-                                                '東京都新宿区西新宿1-20-3 西新宿高木ビル8F',
-                                                style: TextStyle(
-                                                  fontSize: 14,
-                                                  color: Colors.grey.shade600,
-                                                ),
-                                              ),
-                                              const SizedBox(height: 4),
-                                              GestureDetector(
-                                                onTap: () async {
-                                                  final Uri url = Uri.parse('https://www.research-coordinate.co.jp');
-                                                  if (await canLaunchUrl(url)) {
-                                                    await launchUrl(url, mode: LaunchMode.externalApplication);
-                                                  }
-                                                },
-                                                child: Text(
-                                                  'https://www.research-coordinate.co.jp',
-                                                  style: TextStyle(
-                                                    fontSize: 12,
-                                                    color: Colors.blue.shade600,
-                                                    decoration: TextDecoration.underline,
-                                                  ),
-                                                ),
-                                              ),
-                                              const SizedBox(height: 4),
-                                              GestureDetector(
-                                                onTap: () async {
-                                                  final Uri emailUri = Uri(
-                                                    scheme: 'mailto',
-                                                    path: 'contact@research-coordinate.co.jp',
-                                                    query: 'subject=自治体連携について',
-                                                  );
-                                                  if (await canLaunchUrl(emailUri)) {
-                                                    await launchUrl(emailUri);
-                                                  }
-                                                },
-                                                child: Text(
-                                                  'contact@research-coordinate.co.jp',
-                                                  style: TextStyle(
-                                                    fontSize: 12,
-                                                    color: Colors.blue.shade600,
-                                                    decoration: TextDecoration.underline,
-                                                  ),
-                                                ),
-                                              ),
-                                            ],
-                                          ),
-                                        ),
-                                      ],
-                                    ),
+                                      ),
+                                    ],
                                   ),
 
                                   // 更新日時
