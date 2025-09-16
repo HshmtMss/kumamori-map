@@ -637,7 +637,7 @@ class _BearMapPageState extends State<BearMapPage> {
                 ),
                 const SizedBox(height: 8),
                 Text(
-                  '本マップは環境省の公開データ等を基に作成しています。5kmメッシュ単位でのクマ出没危険度を可視化し、地域の参考情報としてご活用いただけます。',
+                  '本マップは環境省の公開データ等を基に作成しています。5kmメッシュ単位でのクマ出没危険度を予測・表示しています。地域の参考情報としてご活用いただけます。',
                   style: TextStyle(
                     fontSize: 14,
                     color: Colors.grey.shade700,
@@ -655,10 +655,10 @@ class _BearMapPageState extends State<BearMapPage> {
                 ),
                 const SizedBox(height: 8),
                 Text(
-                  '• 実際の状況は日々変化する可能性があります\n'
-                  '• 本アプリの情報は参考情報として利用してください\n'
-                  '• 最新の情報は各自治体や関係機関にご確認ください\n'
-                  '• 野生動物との遭遇には十分ご注意ください',
+                  '• 実際の状況は異なる場合があります。\n'
+                  '• 本アプリの情報は参考情報としてご利用してください。\n'
+                  '• 最新の情報は各自治体や関係機関にご確認ください。\n'
+                  '• 野生動物との遭遇には十分ご注意ください。',
                   style: TextStyle(
                     fontSize: 14,
                     color: Colors.grey.shade700,
@@ -771,7 +771,7 @@ class _BearMapPageState extends State<BearMapPage> {
                 ),
                 const SizedBox(height: 12),
                 Text(
-                  '現在のマップは環境省の全国データを使用していますが、自治体様との連携により、より詳細で正確な地域情報の提供が可能です。',
+                  '連携いただける自治体様を募集しています。自治体様との連携により、より詳細で正確な地域情報の提供が可能です。',
                   style: TextStyle(
                     fontSize: 14,
                     color: Colors.grey.shade700,
@@ -792,7 +792,7 @@ class _BearMapPageState extends State<BearMapPage> {
                   '• リアルタイムでの出没情報更新\n'
                   '• より細かい地域単位での危険度表示\n'
                   '• 住民・観光客への効果的な注意喚起\n'
-                  '• 地域に特化したカスタマイズ対応',
+                  '• 地域に特化したカスタマイズ',
                   style: TextStyle(
                     fontSize: 14,
                     color: Colors.grey.shade700,
