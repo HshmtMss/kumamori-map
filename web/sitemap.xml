@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
+  <!-- トップページ -->
+  <url>
+    <loc>https://kumamori-map.netlify.app/</loc>
+    <lastmod>2025-09-17</lastmod>
+    <changefreq>daily</changefreq>
+    <priority>1.0</priority>
+  </url>
+  
+  <!-- Flutter WebアプリでSPAの場合、通常はトップページのみで十分です -->
+  <!-- もし複数のルート/画面がある場合は追加してください -->
+</urlset>
+
