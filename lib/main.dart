@@ -314,7 +314,7 @@ class _BearMapPageState extends State<BearMapPage> {
                           },
                         ),
                         _buildShareOption(
-                          icon: Icons.content_copy,
+                          icon: FontAwesomeIcons.copy,
                           label: 'コピー',
                           color: Colors.grey.shade600,
                           onTap: () async {
