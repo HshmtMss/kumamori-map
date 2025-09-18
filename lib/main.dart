@@ -875,7 +875,7 @@ class _BearMapPageState extends State<BearMapPage> {
                 ),
                 const SizedBox(height: 8),
                 Text(
-                  '本マップは環境省の公開データ等を基に作成しています。5kmメッシュ単位でのクマ出没危険度を予測・表示しています。地域の参考情報としてご活用いただけます。',
+                  '本マップは環境省の公開データ等を基に作成しています。5kmメッシュ単位でのクマ出没危険度を予測表示しています。地域の参考情報としてご活用いただけます。',
                   style: TextStyle(
                     fontSize: 14,
                     color: Colors.grey.shade700,
@@ -1026,6 +1026,7 @@ class _BearMapPageState extends State<BearMapPage> {
                 ),
                 const SizedBox(height: 8),
                 Text(
+                  '• クマ出没情報管理システムのご提供\n'
                   '• リアルタイムでの出没情報更新\n'
                   '• より細かい地域単位での危険度表示\n'
                   '• 住民・観光客への効果的な注意喚起\n'
@@ -1916,7 +1917,9 @@ class _BearMapPageState extends State<BearMapPage> {
                                           },
                                         ),
                                         const SizedBox(height: 10),
-                                        
+                                        // クマ危険度インジケーターの表示部分を修正
+                                        // main.dartの該当箇所（約1100行目付近）を以下のように変更
+
                                         if (_getDisplayMeshData() != null) ...[
                                           Center(
                                             child: Column(
@@ -1927,7 +1930,7 @@ class _BearMapPageState extends State<BearMapPage> {
                                                     fontSize: 20,
                                                     fontWeight: FontWeight.bold,
                                                     color: _getDisplayMeshData()!.score == 0
-                                                        ? Colors.cyan
+                                                        ? Colors.cyan  // 安全レベルの場合は水色
                                                         : _getDisplayMeshData()!.score < 2.0
                                                             ? Colors.green
                                                             : _getDisplayMeshData()!.score < 4.0
@@ -1963,13 +1966,90 @@ class _BearMapPageState extends State<BearMapPage> {
                                             ),
                                           ),
                                         ] else ...[
-                                          const Center(
-                                            child: Text(
-                                              'クマ出没の報告がない地域です',
-                                              style: TextStyle(fontSize: 14, color: Colors.grey),
+                                          // データがない場合の表示
+                                          Center(
+                                            child: Column(
+                                              children: [
+                                                Text(
+                                                  '安全',
+                                                  style: TextStyle(
+                                                    fontSize: 20,
+                                                    fontWeight: FontWeight.bold,
+                                                    color: Colors.cyan,  // 安全レベルと同じ水色
+                                                  ),
+                                                ),
+                                                const SizedBox(height: 4),
+                                                Text(
+                                                  'スコア: 0.00',
+                                                  style: const TextStyle(
+                                                    fontSize: 12,
+                                                    color: Colors.grey,
+                                                  ),
+                                                ),
+                                                const SizedBox(height: 4),
+                                                const Text(
+                                                  'クマ出没の報告がない地域です',
+                                                  style: TextStyle(fontSize: 14, color: Colors.grey),
+                                                  textAlign: TextAlign.center,
+                                                ),
+                                              ],
                                             ),
                                           ),
                                         ],
+                                        
+                                        // if (_getDisplayMeshData() != null) ...[
+                                        //   Center(
+                                        //     child: Column(
+                                        //       children: [
+                                        //         Text(
+                                        //           getLevelText(_getDisplayMeshData()!.score),
+                                        //           style: TextStyle(
+                                        //             fontSize: 20,
+                                        //             fontWeight: FontWeight.bold,
+                                        //             color: _getDisplayMeshData()!.score == 0
+                                        //                 ? Colors.cyan
+                                        //                 : _getDisplayMeshData()!.score < 2.0
+                                        //                     ? Colors.green
+                                        //                     : _getDisplayMeshData()!.score < 4.0
+                                        //                         ? Colors.yellow.shade700
+                                        //                         : _getDisplayMeshData()!.score < 5.0
+                                        //                             ? Colors.orange
+                                        //                             : Colors.red,
+                                        //           ),
+                                        //         ),
+                                        //         const SizedBox(height: 4),
+                                        //         Text(
+                                        //           'スコア: ${_getDisplayMeshData()!.score.toStringAsFixed(2)}',
+                                        //           style: const TextStyle(
+                                        //             fontSize: 12,
+                                        //             color: Colors.grey,
+                                        //           ),
+                                        //         ),
+                                        //         const SizedBox(height: 4),
+                                        //         Text(
+                                        //           _getDisplayMeshData()!.score == 0
+                                        //               ? 'クマ出没の報告がない地域です'
+                                        //               : _getDisplayMeshData()!.score < 2.0
+                                        //                   ? 'クマ出没の報告は少ない地域です'
+                                        //                   : _getDisplayMeshData()!.score < 4.0
+                                        //                       ? 'クマ出没の報告がある地域です'
+                                        //                       : _getDisplayMeshData()!.score < 5.0
+                                        //                           ? '最近、クマ出没の報告がある地域です'
+                                        //                           : '最近、クマ出没の報告が多い地域です',
+                                        //           style: const TextStyle(fontSize: 14, color: Colors.grey),
+                                        //           textAlign: TextAlign.center,
+                                        //         ),
+                                        //       ],
+                                        //     ),
+                                        //   ),
+                                        // ] else ...[
+                                        //   const Center(
+                                        //     child: Text(
+                                        //       'クマ出没の報告がない地域です',
+                                        //       style: TextStyle(fontSize: 14, color: Colors.grey),
+                                        //     ),
+                                        //   ),
+                                        // ],
                                       ],
                                     ),
                                   ),
