@@ -2010,6 +2010,41 @@ class _BearMapPageState extends State<BearMapPage> {
                                 ],
                               ),
                             ),
+                             // コピーライト追加
+                            Container(
+                              padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
+                              decoration: BoxDecoration(
+                                border: Border(
+                                  top: BorderSide(
+                                    color: Colors.grey.shade200,
+                                    width: 1,
+                                  ),
+                                ),
+                              ),
+                              child: Column(
+                                children: [
+                                  Text(
+                                    '© 2025 くまもりマップ',
+                                    style: TextStyle(
+                                      fontSize: 10,
+                                      color: Colors.grey.shade500,
+                                      fontWeight: FontWeight.w400,
+                                    ),
+                                    textAlign: TextAlign.center,
+                                  ),
+                                  const SizedBox(height: 4),
+                                  Text(
+                                    'All rights reserved.',
+                                    style: TextStyle(
+                                      fontSize: 9,
+                                      color: Colors.grey.shade400,
+                                      fontWeight: FontWeight.w300,
+                                    ),
+                                    textAlign: TextAlign.center,
+                                   ),
+                                  ],
+                                ),
+                              ),
                           ],
                         ),
                       ),
