@@ -24,10 +24,8 @@ class MyApp extends StatelessWidget {
       theme: ThemeData(
         colorScheme: ColorScheme.fromSeed(seedColor: Colors.brown),
         useMaterial3: true,
-        fontFamily: 'Hiragino Sans', // macOS標準の日本語フォント
-        // または 'Yu Gothic UI', 'Meiryo', 'MS Gothic' など
+        fontFamily: 'Hiragino Sans',
       ),
-      // 日本語ロケール設定
       locale: const Locale('ja', 'JP'),
       localizationsDelegates: const [
         GlobalMaterialLocalizations.delegate,
@@ -35,7 +33,7 @@ class MyApp extends StatelessWidget {
         GlobalCupertinoLocalizations.delegate,
       ],
       supportedLocales: const [
-        Locale('ja', 'JP'), // 日本語
+        Locale('ja', 'JP'),
       ],
       home: const BearMapPage(),
     );
@@ -55,32 +53,19 @@ class _BearMapPageState extends State<BearMapPage> {
   final MapController mapController = MapController();
   Position? currentPosition;
   
-  // 検索機能用
   final TextEditingController searchController = TextEditingController();
   bool isSearching = false;
   List<SearchResult> searchResults = [];
   
-  // ピン機能用（単一ピン）
   CustomPin? selectedPin;
-  
-  // ヒートマップの透明度（0.0-1.0）
   double heatmapOpacity = 0.4;
-
-  // 透明度調整パネルの表示状態
-  bool isOpacityPanelOpen = false;
-  
-  // 表示する情報のタイプ
   InfoType? activeInfoType;
-  
-  // 現在地の情報を保持
   MeshData? currentLocationMeshData;
-  
-  // 地名情報を保持
   String? currentLocationAddress;
   String? selectedPinAddress;
   bool isLoadingAddress = false;
+  bool isSettingsPanelOpen = false;
   
-  // 地図タイルの種類
   int selectedTileProvider = 0;
   final List<MapTileProvider> tileProviders = [
     MapTileProvider(
@@ -101,11 +86,8 @@ class _BearMapPageState extends State<BearMapPage> {
     ),
   ];
   
-  // ボトムシート用のコントローラー
   final DraggableScrollableController _draggableController = DraggableScrollableController();
-  
-  // 更新日時（デプロイ時に手動で更新）
-  final String lastUpdated = '2025.9.9';
+  final String lastUpdated = '2025年9月18日 9:30';
   
   @override
   void initState() {
@@ -121,7 +103,297 @@ class _BearMapPageState extends State<BearMapPage> {
     super.dispose();
   }
 
-  // 逆ジオコーディング（緯度経度から住所を取得）
+  // SNSシェア機能
+  Future<void> _shareToSNS(String platform) async {
+    String shareText = '';
+    String? locationText = _getDisplayAddress();
+    String riskLevel = _getDisplayMeshData() != null 
+        ? getLevelText(_getDisplayMeshData()!.score) 
+        : '安全';
+    
+    if (activeInfoType == InfoType.currentLocation) {
+      shareText = '現在地のクマ出没危険度をチェックしました！\n'
+          '場所: ${locationText ?? '不明'}\n'
+          '危険度: $riskLevel\n\n'
+          'くまもりマップで安全な外出を！\n'
+          '#くまもりマップ #クマ出没 #安全確認';
+    } else if (selectedPin != null) {
+      shareText = 'クマ出没危険度をチェックしました！\n'
+          '場所: ${locationText ?? '選択地点'}\n'
+          '危険度: $riskLevel\n\n'
+          'くまもりマップで事前に危険度を確認しよう！\n'
+          '#くまもりマップ #クマ出没 #安全確認';
+    } else {
+      shareText = 'くまもりマップでクマ出没危険度をチェック！\n'
+          '全国のクマ出没情報を地図で確認できます。\n\n'
+          '安全な外出のためにぜひご活用ください。\n'
+          '#くまもりマップ #クマ出没 #安全確認';
+    }
+
+    String appUrl = 'https://kumamori-map.netlify.app/';
+    String encodedText = Uri.encodeComponent(shareText);
+    String encodedUrl = Uri.encodeComponent(appUrl);
+    
+    Uri? shareUri;
+    
+    switch (platform) {
+      case 'x':
+        shareUri = Uri.parse('https://twitter.com/intent/tweet?text=$encodedText&url=$encodedUrl');
+        break;
+      case 'facebook':
+        shareUri = Uri.parse('https://www.facebook.com/sharer/sharer.php?u=$encodedUrl&quote=$encodedText');
+        break;
+      case 'line':
+        shareUri = Uri.parse('https://social-plugins.line.me/lineit/share?url=$encodedUrl&text=$encodedText');
+        break;
+      case 'instagram':
+        try {
+          shareUri = Uri.parse('instagram://');
+          if (await canLaunchUrl(shareUri)) {
+            await launchUrl(shareUri, mode: LaunchMode.externalApplication);
+            await Clipboard.setData(ClipboardData(text: '$shareText\n$appUrl'));
+            if (mounted) {
+              ScaffoldMessenger.of(context).showSnackBar(
+                const SnackBar(
+                  content: Text('インスタグラムが開きました。シェア内容をクリップボードにコピーしました。'),
+                  duration: Duration(seconds: 3),
+                ),
+              );
+            }
+          } else {
+            shareUri = Uri.parse('https://www.instagram.com/');
+            await launchUrl(shareUri, mode: LaunchMode.externalApplication);
+            await Clipboard.setData(ClipboardData(text: '$shareText\n$appUrl'));
+            if (mounted) {
+              ScaffoldMessenger.of(context).showSnackBar(
+                const SnackBar(
+                  content: Text('インスタグラムのウェブ版が開きました。シェア内容をクリップボードにコピーしました。'),
+                  duration: Duration(seconds: 3),
+                ),
+              );
+            }
+          }
+          return;
+        } catch (e) {
+          await Clipboard.setData(ClipboardData(text: '$shareText\n$appUrl'));
+          if (mounted) {
+            ScaffoldMessenger.of(context).showSnackBar(
+              const SnackBar(
+                content: Text('シェア内容をクリップボードにコピーしました'),
+                duration: Duration(seconds: 2),
+              ),
+            );
+          }
+          return;
+        }
+      default:
+        return;
+    }
+
+    try {
+      if (await canLaunchUrl(shareUri)) {
+        await launchUrl(shareUri, mode: LaunchMode.externalApplication);
+      } else {
+        await Clipboard.setData(ClipboardData(text: '$shareText\n$appUrl'));
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              content: Text('シェア内容をクリップボードにコピーしました'),
+              duration: Duration(seconds: 2),
+            ),
+          );
+        }
+      }
+    } catch (e) {
+      await Clipboard.setData(ClipboardData(text: '$shareText\n$appUrl'));
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('シェア内容をクリップボードにコピーしました'),
+            duration: Duration(seconds: 2),
+          ),
+        );
+      }
+    }
+  }
+
+  // SNSシェアダイアログを表示
+  void _showShareDialog(BuildContext context) {
+    showModalBottomSheet(
+      context: context,
+      backgroundColor: Colors.transparent,
+      builder: (BuildContext context) {
+        return Container(
+          decoration: const BoxDecoration(
+            color: Colors.white,
+            borderRadius: BorderRadius.only(
+              topLeft: Radius.circular(20),
+              topRight: Radius.circular(20),
+            ),
+          ),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Container(
+                margin: const EdgeInsets.symmetric(vertical: 12),
+                width: 40,
+                height: 4,
+                decoration: BoxDecoration(
+                  color: Colors.grey[300],
+                  borderRadius: BorderRadius.circular(2),
+                ),
+              ),
+              
+              Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 8),
+                child: Row(
+                  children: [
+                    Icon(Icons.share, color: Colors.brown.shade700),
+                    const SizedBox(width: 8),
+                    const Text(
+                      'シェアする',
+                      style: TextStyle(
+                        fontSize: 18,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              
+              Padding(
+                padding: const EdgeInsets.all(20),
+                child: Column(
+                  children: [
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                      children: [
+                        _buildShareOption(
+                          icon: Icons.close,
+                          label: 'X',
+                          color: Colors.black,
+                          onTap: () {
+                            Navigator.pop(context);
+                            _shareToSNS('x');
+                          },
+                        ),
+                        _buildShareOption(
+                          icon: Icons.facebook,
+                          label: 'Facebook',
+                          color: const Color(0xFF4267B2),
+                          onTap: () {
+                            Navigator.pop(context);
+                            _shareToSNS('facebook');
+                          },
+                        ),
+                        _buildShareOption(
+                          icon: Icons.chat,
+                          label: 'LINE',
+                          color: const Color(0xFF00B900),
+                          onTap: () {
+                            Navigator.pop(context);
+                            _shareToSNS('line');
+                          },
+                        ),
+                      ],
+                    ),
+                    
+                    const SizedBox(height: 16),
+                    
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                      children: [
+                        _buildShareOption(
+                          icon: Icons.camera_alt,
+                          label: 'Instagram',
+                          color: const Color(0xFFE4405F),
+                          onTap: () {
+                            Navigator.pop(context);
+                            _shareToSNS('instagram');
+                          },
+                        ),
+                        _buildShareOption(
+                          icon: Icons.content_copy,
+                          label: 'コピー',
+                          color: Colors.grey.shade600,
+                          onTap: () async {
+                            Navigator.pop(context);
+                            
+                            String shareText = '';
+                            String? locationText = _getDisplayAddress();
+                            String riskLevel = _getDisplayMeshData() != null 
+                                ? getLevelText(_getDisplayMeshData()!.score) 
+                                : '安全';
+                            
+                            if (activeInfoType == InfoType.currentLocation) {
+                              shareText = '現在地のクマ出没危険度: $riskLevel\n場所: ${locationText ?? '不明'}\n\nくまもりマップで安全確認！\nhttps://kumamori-map.netlify.app/';
+                            } else if (selectedPin != null) {
+                              shareText = 'クマ出没危険度: $riskLevel\n場所: ${locationText ?? '選択地点'}\n\nくまもりマップで安全確認！\nhttps://kumamori-map.netlify.app/';
+                            } else {
+                              shareText = 'くまもりマップでクマ出没危険度をチェック！\n安全な外出のためにご活用ください。\nhttps://kumamori-map.netlify.app/';
+                            }
+                            
+                            await Clipboard.setData(ClipboardData(text: shareText));
+                            if (mounted) {
+                              ScaffoldMessenger.of(context).showSnackBar(
+                                const SnackBar(
+                                  content: Text('クリップボードにコピーしました'),
+                                  duration: Duration(seconds: 2),
+                                ),
+                              );
+                            }
+                          },
+                        ),
+                        const SizedBox(width: 64),
+                      ],
+                    ),
+                  ],
+                ),
+              ),
+              const SizedBox(height: 20),
+            ],
+          ),
+        );
+      },
+    );
+  }
+
+  Widget _buildShareOption({
+    required IconData icon,
+    required String label,
+    required Color color,
+    required VoidCallback onTap,
+  }) {
+    return GestureDetector(
+      onTap: onTap,
+      child: Column(
+        children: [
+          Container(
+            width: 56,
+            height: 56,
+            decoration: BoxDecoration(
+              color: color,
+              shape: BoxShape.circle,
+            ),
+            child: Icon(
+              icon,
+              color: Colors.white,
+              size: 28,
+            ),
+          ),
+          const SizedBox(height: 8),
+          Text(
+            label,
+            style: const TextStyle(
+              fontSize: 12,
+              fontWeight: FontWeight.w500,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
   Future<String?> reverseGeocode(double lat, double lon) async {
     try {
       final uri = Uri.parse(
@@ -141,16 +413,10 @@ class _BearMapPageState extends State<BearMapPage> {
 
       if (response.statusCode == 200) {
         final data = json.decode(response.body);
-        print('API Response language detection:');
-        print('Display name: ${data['display_name']}');
-        print('Address details: ${data['address']}');
-        
-        // addressdetailsを使用してより詳細な住所情報を取得
         final address = data['address'] as Map<String, dynamic>?;
         if (address != null) {
           final List<String> addressParts = [];
           
-          // 日本の住所階層に従って組み立て
           if (address['province'] != null) {
             addressParts.add(address['province']);
           } else if (address['state'] != null) {
@@ -184,7 +450,6 @@ class _BearMapPageState extends State<BearMapPage> {
           }
         }
         
-        // フォールバック：display_nameを使用
         final displayName = data['display_name'] ?? '';
         if (displayName.isNotEmpty) {
           final parts = displayName.split(',');
@@ -211,7 +476,6 @@ class _BearMapPageState extends State<BearMapPage> {
     return null;
   }
   
-  // 地名検索機能
   Future<void> searchLocation(String query) async {
     if (query.isEmpty) {
       setState(() {
@@ -260,7 +524,6 @@ class _BearMapPageState extends State<BearMapPage> {
     }
   }
 
-  // ピンを設定（既存のピンは自動的に削除される）
   void setPin(LatLng position) async {
     MeshData? meshData = getMeshDataAtPosition(position);
     
@@ -277,7 +540,6 @@ class _BearMapPageState extends State<BearMapPage> {
       isLoadingAddress = true;
     });
     
-    // 非同期で住所を取得
     final address = await reverseGeocode(position.latitude, position.longitude);
     if (mounted && selectedPin != null && selectedPin!.position == position) {
       setState(() {
@@ -287,7 +549,6 @@ class _BearMapPageState extends State<BearMapPage> {
     }
   }
   
-  // 指定位置のメッシュデータを取得
   MeshData? getMeshDataAtPosition(LatLng position) {
     for (var data in meshDataList) {
       final center = data.latLng;
@@ -304,7 +565,6 @@ class _BearMapPageState extends State<BearMapPage> {
     return null;
   }
   
-  // 現在地ボタンが押されたときの処理
   void showCurrentLocationInfo() async {
     if (currentPosition != null) {
       final position = LatLng(currentPosition!.latitude, currentPosition!.longitude);
@@ -319,7 +579,6 @@ class _BearMapPageState extends State<BearMapPage> {
       
       mapController.move(position, 15.0);
       
-      // 非同期で住所を取得
       final address = await reverseGeocode(position.latitude, position.longitude);
       if (mounted && activeInfoType == InfoType.currentLocation) {
         setState(() {
@@ -330,7 +589,6 @@ class _BearMapPageState extends State<BearMapPage> {
     }
   }
 
-  // 現在地を取得
   Future<void> _getCurrentLocation() async {
     try {
       bool serviceEnabled = await Geolocator.isLocationServiceEnabled();
@@ -357,7 +615,6 @@ class _BearMapPageState extends State<BearMapPage> {
       if (mounted) {
         setState(() {});
         
-        // 現在地の情報を自動的に表示
         if (currentPosition != null && !isLoading) {
           showCurrentLocationInfo();
         }
@@ -370,15 +627,11 @@ class _BearMapPageState extends State<BearMapPage> {
   Future<void> loadCsvData() async {
     try {
       final String csvString = await rootBundle.loadString('assets/bear_combined.csv');
-      
       final lines = csvString.split('\n').where((line) => line.trim().isNotEmpty).toList();
       
       List<MeshData> tempList = [];
       Map<String, MeshData> meshMap = {};
-      int validMeshCount = 0;
-      int invalidMeshCount = 0;
       
-      // ヘッダー行の判定
       int startIndex = 0;
       if (lines.isNotEmpty) {
         final firstLine = lines[0].trim();
@@ -387,7 +640,6 @@ class _BearMapPageState extends State<BearMapPage> {
         }
       }
       
-      // データ行を処理（第1パス：基本スコア計算）
       for (int i = startIndex; i < lines.length; i++) {
         final line = lines[i].trim();
         if (line.isEmpty) continue;
@@ -403,7 +655,6 @@ class _BearMapPageState extends State<BearMapPage> {
           
           double score = calculateScore(second, sixth, latest, latestSingle);
           
-          // スコアが0より大きいメッシュのみを処理（パフォーマンス改善）
           if (score > 0) {
             final latLng = meshCodeToLatLng(meshCode);
             if (latLng != null) {
@@ -424,7 +675,6 @@ class _BearMapPageState extends State<BearMapPage> {
         }
       }
       
-      // 第2パス：周囲メッシュを考慮したスコア調整
       for (var meshData in tempList) {
         final neighbors = getNeighborMeshCodes(meshData.meshCode);
         double neighborSum = 0;
@@ -452,7 +702,6 @@ class _BearMapPageState extends State<BearMapPage> {
         isLoading = false;
       });
       
-      // CSVデータの読み込みが完了後、現在地情報を表示
       if (currentPosition != null) {
         showCurrentLocationInfo();
       }
@@ -464,7 +713,6 @@ class _BearMapPageState extends State<BearMapPage> {
     }
   }
 
-  // 隣接する8つのメッシュコードを取得
   List<String> getNeighborMeshCodes(String meshCode) {
     if (meshCode.length < 8) return [];
     
@@ -516,7 +764,6 @@ class _BearMapPageState extends State<BearMapPage> {
     return neighbors;
   }
 
-  // 実績スコアの計算
   double calculateScore(int second, int sixth, int latest, int latestSingle) {
     double score = latest * 3.0 + sixth * 1.5 + second * 0.5;
     
@@ -527,7 +774,6 @@ class _BearMapPageState extends State<BearMapPage> {
     return score;
   }
 
-  // 5kmメッシュコードから緯度経度を計算
   LatLng? meshCodeToLatLng(String meshCode) {
     try {
       if (meshCode.length < 8) return null;
@@ -560,32 +806,25 @@ class _BearMapPageState extends State<BearMapPage> {
     }
   }
 
-  // スコアに応じた色を取得（修正版）
   Color getColorForScore(double score) {
-    // スコア0の場合は完全に透明
     if (score == 0) {
       return Colors.transparent;
     }
     
-    // 0より大き2未満: 緑
     if (score > 0 && score < 2.0) {
       return Colors.green.withOpacity(heatmapOpacity);
     } 
-    // 2以上4未満: 黄色
     else if (score >= 2.0 && score < 4.0) {
       return Colors.yellow.withOpacity(heatmapOpacity);
     } 
-    // 4以上5未満: オレンジ
     else if (score >= 4.0 && score < 5.0) {
       return Colors.orange.withOpacity(heatmapOpacity);
     } 
-    // 5以上: 赤
     else {
       return Colors.red.withOpacity(heatmapOpacity);
     }
   }
 
-  // スコアからレベル文字列を取得（修正版）
   String getLevelText(double score) {
     if (score == 0) return '安全';
     if (score > 0 && score < 2.0) return '低い';
@@ -595,7 +834,6 @@ class _BearMapPageState extends State<BearMapPage> {
     return '安全';
   }
 
-  // 地図タイプに応じたアイコンを返す
   IconData _getIconForTileProvider(int index) {
     switch (index) {
       case 0:
@@ -609,7 +847,6 @@ class _BearMapPageState extends State<BearMapPage> {
     }
   }
 
-  // ご利用にあたってダイアログを表示
   void _showUsageDialog(BuildContext context) {
     showDialog(
       context: context,
@@ -743,7 +980,6 @@ class _BearMapPageState extends State<BearMapPage> {
     );
   }
 
-  // 自治体向けダイアログを表示
   void _showMunicipalDialog(BuildContext context) {
     showDialog(
       context: context,
@@ -884,7 +1120,6 @@ class _BearMapPageState extends State<BearMapPage> {
           ? const Center(child: CircularProgressIndicator())
           : Stack(
               children: [
-                // 地図
                 FlutterMap(
                   mapController: mapController,
                   options: MapOptions(
@@ -894,22 +1129,18 @@ class _BearMapPageState extends State<BearMapPage> {
                     maxZoom: 18.0,
                     interactionOptions: const InteractionOptions(
                       enableMultiFingerGestureRace: false,
-                      rotationThreshold: 20.0,  // より高い値に設定
-                      rotationWinGestures: MultiFingerGesture.none,  // 回転ジェスチャーを完全に無効化
+                      rotationThreshold: 20.0,
+                      rotationWinGestures: MultiFingerGesture.none,
                       pinchZoomThreshold: 0.5,
                       pinchMoveThreshold: 40.0,
-                      flags: InteractiveFlag.all & ~InteractiveFlag.rotate,  // 回転フラグを除外
+                      flags: InteractiveFlag.all & ~InteractiveFlag.rotate,
                     ),
                     onTap: (tapPosition, point) {
                       setPin(point);
                     },
-                    // カメラ移動時にポリゴンを再描画
                     onPositionChanged: (position, hasGesture) {
-                      // ズームやパンが変更された時に再描画をトリガー
                       if (hasGesture) {
-                        setState(() {
-                          // 状態を更新して再描画
-                        });
+                        setState(() {});
                       }
                     },
                   ),
@@ -919,11 +1150,9 @@ class _BearMapPageState extends State<BearMapPage> {
                       subdomains: tileProviders[selectedTileProvider].subdomains ?? const [],
                       userAgentPackageName: 'com.example.bear_watch',
                     ),
-                    // メッシュデータを表示（パフォーマンス最適化版）
                     PolygonLayer(
                       polygons: meshDataList
                           .where((data) {
-                            // スコアが0のメッシュは描画しない
                             return data.score > 0;
                           })
                           .map((data) {
@@ -945,7 +1174,6 @@ class _BearMapPageState extends State<BearMapPage> {
                           })
                           .toList(),
                     ),
-                    // 選択されたピンレイヤー
                     if (selectedPin != null && (activeInfoType == InfoType.pin || activeInfoType == InfoType.search))
                       MarkerLayer(
                         markers: [
@@ -961,7 +1189,6 @@ class _BearMapPageState extends State<BearMapPage> {
                           ),
                         ],
                       ),
-                    // 現在地マーカー
                     if (currentPosition != null)
                       MarkerLayer(
                         markers: [
@@ -995,7 +1222,6 @@ class _BearMapPageState extends State<BearMapPage> {
                   ],
                 ),
                 
-                // 検索バー
                 Positioned(
                   left: 16,
                   right: 16,
@@ -1052,7 +1278,40 @@ class _BearMapPageState extends State<BearMapPage> {
                         ),
                       ),
                       
-                      // 検索結果
+                      Container(
+                        margin: const EdgeInsets.only(top: 4),
+                        alignment: Alignment.centerRight,
+                        child: Container(
+                          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                          decoration: BoxDecoration(
+                            color: Colors.white.withOpacity(0.9),
+                            borderRadius: BorderRadius.circular(8),
+                            boxShadow: [
+                              BoxShadow(
+                                color: Colors.black.withOpacity(0.05),
+                                blurRadius: 4,
+                                offset: const Offset(0, 1),
+                              ),
+                            ],
+                          ),
+                          child: Row(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              Icon(Icons.update, size: 12, color: Colors.grey.shade500),
+                              const SizedBox(width: 4),
+                              Text(
+                                '更新: $lastUpdated',
+                                style: TextStyle(
+                                  fontSize: 11,
+                                  color: Colors.grey.shade500,
+                                  fontWeight: FontWeight.w400,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ),
+                      
                       if (searchResults.isNotEmpty)
                         Container(
                           margin: const EdgeInsets.only(top: 8),
@@ -1107,167 +1366,81 @@ class _BearMapPageState extends State<BearMapPage> {
                   ),
                 ),
                 
-                // 地図切り替えボタン
-                Positioned(
-                  left: 16,
-                  top: MediaQuery.of(context).padding.top + 80,
-                  child: Container(
-                    decoration: BoxDecoration(
-                      color: Colors.white,
-                      borderRadius: BorderRadius.circular(22),
-                      boxShadow: [
-                        BoxShadow(
-                          color: Colors.black.withOpacity(0.1),
-                          blurRadius: 8,
-                          offset: const Offset(0, 2),
-                        ),
-                      ],
-                    ),
-                    child: PopupMenuButton<int>(
-                      initialValue: selectedTileProvider,
-                      onSelected: (int value) {
-                        setState(() {
-                          selectedTileProvider = value;
-                        });
-                      },
-                      itemBuilder: (context) => tileProviders
-                          .asMap()
-                          .entries
-                          .map((entry) => PopupMenuItem<int>(
-                                value: entry.key,
-                                child: Row(
-                                  children: [
-                                    Icon(
-                                      _getIconForTileProvider(entry.key),
-                                      size: 20,
-                                    ),
-                                    const SizedBox(width: 8),
-                                    Text(entry.value.name),
-                                  ],
-                                ),
-                              ))
-                          .toList(),
-                      child: Container(
-                        padding: const EdgeInsets.all(10),
-                        child: Icon(_getIconForTileProvider(selectedTileProvider), size: 24),
-                      ),
-                    ),
-                  ),
-                ),
-                
-                // 透明度調整ボタン（地図切り替えボタンの下）
-                Positioned(
-                  left: 16,
-                  top: MediaQuery.of(context).padding.top + 140,
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      // ボタン本体
-                      GestureDetector(
-                        onTap: () {
-                          setState(() {
-                            isOpacityPanelOpen = !isOpacityPanelOpen;
-                          });
-                        },
-                        child: Container(
-                          decoration: BoxDecoration(
-                            color: Colors.white,
-                            borderRadius: BorderRadius.circular(22),
-                            boxShadow: [
-                              BoxShadow(
-                                color: Colors.black.withOpacity(0.1),
-                                blurRadius: 8,
-                                offset: const Offset(0, 2),
-                              ),
-                            ],
-                          ),
-                          padding: const EdgeInsets.all(10),
-                          child: Icon(
-                            Icons.opacity,
-                            size: 24,
-                            color: Colors.black87,
-                          ),
-                        ),
-                      ),
-                      
-                      // 透明度調整パネル（開いているときのみ表示）
-                      if (isOpacityPanelOpen)
-                        Container(
-                          margin: const EdgeInsets.only(top: 8),
-                          width: 200,
-                          padding: const EdgeInsets.all(12),
-                          decoration: BoxDecoration(
-                            color: Colors.white,
-                            borderRadius: BorderRadius.circular(12),
-                            boxShadow: [
-                              BoxShadow(
-                                color: Colors.black.withOpacity(0.1),
-                                blurRadius: 8,
-                                offset: const Offset(0, 2),
-                              ),
-                            ],
-                          ),
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              Row(
-                                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                                children: [
-                                  const Text(
-                                    '透明度',
-                                    style: TextStyle(
-                                      fontSize: 14,
-                                      fontWeight: FontWeight.w500,
-                                    ),
-                                  ),
-                                  Text(
-                                    '${(heatmapOpacity * 100).round()}%',
-                                    style: TextStyle(
-                                      fontSize: 14,
-                                      color: Colors.grey.shade600,
-                                      fontWeight: FontWeight.w500,
-                                    ),
-                                  ),
-                                ],
-                              ),
-                              const SizedBox(height: 8),
-                              SliderTheme(
-                                data: SliderTheme.of(context).copyWith(
-                                  activeTrackColor: Colors.brown.shade400,
-                                  inactiveTrackColor: Colors.grey.shade300,
-                                  thumbColor: Colors.brown.shade600,
-                                  overlayColor: Colors.brown.withOpacity(0.2),
-                                  thumbShape: const RoundSliderThumbShape(
-                                    enabledThumbRadius: 8,
-                                  ),
-                                  trackHeight: 4,
-                                ),
-                                child: Slider(
-                                  value: heatmapOpacity,
-                                  min: 0.1,
-                                  max: 0.9,
-                                  divisions: 8,
-                                  onChanged: (value) {
-                                    setState(() {
-                                      heatmapOpacity = value;
-                                    });
-                                  },
-                                ),
-                              ),
-                            ],
-                          ),
-                        ),
-                    ],
-                  ),
-                ),
-                
-                // ズームコントロールボタン
                 Positioned(
                   right: 16,
-                  bottom: 280,
+                  bottom: MediaQuery.of(context).size.height * 0.32,
                   child: Column(
                     children: [
                       Container(
+                        width: 48,
+                        height: 48,
+                        decoration: BoxDecoration(
+                          color: Colors.white,
+                          shape: BoxShape.circle,
+                          boxShadow: [
+                            BoxShadow(
+                              color: Colors.black.withOpacity(0.1),
+                              blurRadius: 8,
+                              offset: const Offset(0, 2),
+                            ),
+                          ],
+                        ),
+                        child: IconButton(
+                          icon: const Icon(
+                            Icons.share,
+                            color: Colors.black87,
+                            size: 24,
+                          ),
+                          onPressed: () => _showShareDialog(context),
+                          padding: EdgeInsets.zero,
+                        ),
+                      ),
+                      
+                      const SizedBox(height: 12),
+                      
+                      Container(
+                        width: 48,
+                        height: 48,
+                        decoration: BoxDecoration(
+                          color: activeInfoType == InfoType.currentLocation ? Colors.blue : Colors.white,
+                          shape: BoxShape.circle,
+                          boxShadow: [
+                            BoxShadow(
+                              color: Colors.black.withOpacity(0.1),
+                              blurRadius: 8,
+                              offset: const Offset(0, 2),
+                            ),
+                          ],
+                        ),
+                        child: IconButton(
+                          icon: Icon(
+                            Icons.my_location,
+                            color: activeInfoType == InfoType.currentLocation ? Colors.white : Colors.black87,
+                            size: 24,
+                          ),
+                          onPressed: () async {
+                            if (currentPosition != null) {
+                              showCurrentLocationInfo();
+                            } else {
+                              await _getCurrentLocation();
+                              if (currentPosition != null) {
+                                showCurrentLocationInfo();
+                              } else {
+                                ScaffoldMessenger.of(context).showSnackBar(
+                                  const SnackBar(content: Text('現在地を取得できませんでした')),
+                                );
+                              }
+                            }
+                          },
+                          padding: EdgeInsets.zero,
+                        ),
+                      ),
+                      
+                      const SizedBox(height: 12),
+                      
+                      Container(
+                        width: 48,
+                        height: 48,
                         decoration: BoxDecoration(
                           color: Colors.white,
                           borderRadius: const BorderRadius.only(
@@ -1283,7 +1456,10 @@ class _BearMapPageState extends State<BearMapPage> {
                           ],
                         ),
                         child: IconButton(
-                          icon: const Icon(Icons.add, size: 24),
+                          icon: const Icon(
+                            Icons.add, 
+                            size: 24,
+                          ),
                           onPressed: () {
                             final currentZoom = mapController.camera.zoom;
                             if (currentZoom < 18.0) {
@@ -1293,14 +1469,19 @@ class _BearMapPageState extends State<BearMapPage> {
                               );
                             }
                           },
+                          padding: EdgeInsets.zero,
                         ),
                       ),
+                      
                       Container(
                         width: 48,
                         height: 1,
                         color: Colors.grey.shade300,
                       ),
+                      
                       Container(
+                        width: 48,
+                        height: 48,
                         decoration: BoxDecoration(
                           color: Colors.white,
                           borderRadius: const BorderRadius.only(
@@ -1316,7 +1497,10 @@ class _BearMapPageState extends State<BearMapPage> {
                           ],
                         ),
                         child: IconButton(
-                          icon: const Icon(Icons.remove, size: 24),
+                          icon: const Icon(
+                            Icons.remove, 
+                            size: 24,
+                          ),
                           onPressed: () {
                             final currentZoom = mapController.camera.zoom;
                             if (currentZoom > 5.0) {
@@ -1326,52 +1510,13 @@ class _BearMapPageState extends State<BearMapPage> {
                               );
                             }
                           },
+                          padding: EdgeInsets.zero,
                         ),
                       ),
                     ],
                   ),
                 ),
                 
-                // 現在地ボタン
-                Positioned(
-                  right: 16,
-                  top: MediaQuery.of(context).padding.top + 80,
-                  child: Container(
-                    decoration: BoxDecoration(
-                      color: activeInfoType == InfoType.currentLocation ? Colors.blue : Colors.white,
-                      shape: BoxShape.circle,
-                      boxShadow: [
-                        BoxShadow(
-                          color: Colors.black.withOpacity(0.1),
-                          blurRadius: 8,
-                          offset: const Offset(0, 2),
-                        ),
-                      ],
-                    ),
-                    child: IconButton(
-                      icon: Icon(
-                        Icons.my_location,
-                        color: activeInfoType == InfoType.currentLocation ? Colors.white : Colors.black87,
-                      ),
-                      onPressed: () async {
-                        if (currentPosition != null) {
-                          showCurrentLocationInfo();
-                        } else {
-                          await _getCurrentLocation();
-                          if (currentPosition != null) {
-                            showCurrentLocationInfo();
-                          } else {
-                            ScaffoldMessenger.of(context).showSnackBar(
-                              const SnackBar(content: Text('現在地を取得できませんでした')),
-                            );
-                          }
-                        }
-                      },
-                    ),
-                  ),
-                ),
-                
-                // コピーライト
                 Positioned(
                   left: 10,
                   right: 10,
@@ -1390,7 +1535,6 @@ class _BearMapPageState extends State<BearMapPage> {
                   ),
                 ),
                 
-                // ボトムシート
                 DraggableScrollableSheet(
                   controller: _draggableController,
                   initialChildSize: 0.30,
@@ -1416,7 +1560,6 @@ class _BearMapPageState extends State<BearMapPage> {
                         controller: scrollController,
                         child: Column(
                           children: [
-                            // ハンドル
                             Container(
                               margin: const EdgeInsets.symmetric(vertical: 12),
                               width: 40,
@@ -1427,13 +1570,11 @@ class _BearMapPageState extends State<BearMapPage> {
                               ),
                             ),
                             
-                            // コンテンツ
                             Padding(
                               padding: const EdgeInsets.symmetric(horizontal: 20),
                               child: Column(
                                 crossAxisAlignment: CrossAxisAlignment.start,
                                 children: [
-                                  // 場所情報ヘッダー
                                   if (activeInfoType != null)
                                     Row(
                                       children: [
@@ -1478,12 +1619,176 @@ class _BearMapPageState extends State<BearMapPage> {
                                             ],
                                           ),
                                         ),
+                                        GestureDetector(
+                                          onTap: () {
+                                            setState(() {
+                                              isSettingsPanelOpen = !isSettingsPanelOpen;
+                                            });
+                                          },
+                                          child: Container(
+                                            width: 40,
+                                            height: 40,
+                                            decoration: BoxDecoration(
+                                              color: isSettingsPanelOpen 
+                                                  ? Colors.brown.shade100 
+                                                  : Colors.grey.shade100,
+                                              borderRadius: BorderRadius.circular(20),
+                                            ),
+                                            child: Icon(
+                                              Icons.settings,
+                                              size: 20,
+                                              color: isSettingsPanelOpen 
+                                                  ? Colors.brown.shade700 
+                                                  : Colors.grey.shade600,
+                                            ),
+                                          ),
+                                        ),
                                       ],
                                     ),
                                   
                                   const SizedBox(height: 12),
                                   
-                                  // 危険度インジケーター
+                                  if (isSettingsPanelOpen)
+                                    Container(
+                                      margin: const EdgeInsets.only(bottom: 12),
+                                      padding: const EdgeInsets.all(16),
+                                      decoration: BoxDecoration(
+                                        color: Colors.brown.shade50,
+                                        borderRadius: BorderRadius.circular(12),
+                                        border: Border.all(color: Colors.brown.shade200),
+                                      ),
+                                      child: Column(
+                                        crossAxisAlignment: CrossAxisAlignment.start,
+                                        children: [
+                                          // 地図スタイル設定
+                                          Row(
+                                            children: [
+                                              Icon(Icons.map, size: 18, color: Colors.brown.shade700),
+                                              const SizedBox(width: 8),
+                                              Text(
+                                                '地図スタイル',
+                                                style: TextStyle(
+                                                  fontSize: 16,
+                                                  fontWeight: FontWeight.w600,
+                                                  color: Colors.brown.shade800,
+                                                ),
+                                              ),
+                                            ],
+                                          ),
+                                          const SizedBox(height: 12),
+                                          Container(
+                                            width: double.infinity,
+                                            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                                            decoration: BoxDecoration(
+                                              color: Colors.white,
+                                              borderRadius: BorderRadius.circular(8),
+                                              border: Border.all(color: Colors.brown.shade300),
+                                            ),
+                                            child: DropdownButtonHideUnderline(
+                                              child: DropdownButton<int>(
+                                                value: selectedTileProvider,
+                                                onChanged: (int? value) {
+                                                  if (value != null) {
+                                                    setState(() {
+                                                      selectedTileProvider = value;
+                                                    });
+                                                  }
+                                                },
+                                                items: tileProviders
+                                                    .asMap()
+                                                    .entries
+                                                    .map((entry) => DropdownMenuItem<int>(
+                                                          value: entry.key,
+                                                          child: Row(
+                                                            children: [
+                                                              Icon(
+                                                                _getIconForTileProvider(entry.key),
+                                                                size: 20,
+                                                                color: Colors.brown.shade600,
+                                                              ),
+                                                              const SizedBox(width: 8),
+                                                              Text(
+                                                                entry.value.name,
+                                                                style: const TextStyle(fontSize: 14),
+                                                              ),
+                                                            ],
+                                                          ),
+                                                        ))
+                                                    .toList(),
+                                                icon: Icon(
+                                                  Icons.arrow_drop_down,
+                                                  color: Colors.brown.shade600,
+                                                ),
+                                                style: TextStyle(
+                                                  color: Colors.brown.shade800,
+                                                  fontSize: 14,
+                                                ),
+                                                isExpanded: true,
+                                              ),
+                                            ),
+                                          ),
+                                          
+                                          const SizedBox(height: 20),
+                                          
+                                          // ヒートマップ設定
+                                          Row(
+                                            children: [
+                                              Icon(Icons.opacity, size: 18, color: Colors.brown.shade700),
+                                              const SizedBox(width: 8),
+                                              Text(
+                                                'ヒートマップ表示',
+                                                style: TextStyle(
+                                                  fontSize: 16,
+                                                  fontWeight: FontWeight.w600,
+                                                  color: Colors.brown.shade800,
+                                                ),
+                                              ),
+                                            ],
+                                          ),
+                                          const SizedBox(height: 12),
+                                          Row(
+                                            children: [
+                                              const Text(
+                                                '不透明度',
+                                                style: TextStyle(fontSize: 14, color: Colors.black87),
+                                              ),
+                                              const Spacer(),
+                                              Text(
+                                                '${(heatmapOpacity * 100).round()}%',
+                                                style: TextStyle(
+                                                  fontSize: 14,
+                                                  color: Colors.brown.shade700,
+                                                  fontWeight: FontWeight.w500,
+                                                ),
+                                              ),
+                                            ],
+                                          ),
+                                          const SizedBox(height: 8),
+                                          SliderTheme(
+                                            data: SliderTheme.of(context).copyWith(
+                                              activeTrackColor: Colors.brown.shade400,
+                                              inactiveTrackColor: Colors.grey.shade300,
+                                              thumbColor: Colors.brown.shade600,
+                                              overlayColor: Colors.brown.withOpacity(0.2),
+                                              thumbShape: const RoundSliderThumbShape(enabledThumbRadius: 7),
+                                              trackHeight: 4,
+                                            ),
+                                            child: Slider(
+                                              value: heatmapOpacity,
+                                              min: 0.1,
+                                              max: 0.9,
+                                              divisions: 8,
+                                              onChanged: (value) {
+                                                setState(() {
+                                                  heatmapOpacity = value;
+                                                });
+                                              },
+                                            ),
+                                          ),
+                                        ],
+                                      ),
+                                    ),
+                                  
                                   Container(
                                     padding: const EdgeInsets.all(12),
                                     decoration: BoxDecoration(
@@ -1504,13 +1809,11 @@ class _BearMapPageState extends State<BearMapPage> {
                                         ),
                                         const SizedBox(height: 10),
                                         
-                                        // 5段階評価バー
                                         LayoutBuilder(
                                           builder: (context, constraints) {
                                             final barWidth = constraints.maxWidth;
                                             final segmentWidth = barWidth / 5;
                                             
-                                            // スコアに基づくインジケーター位置を計算
                                             double indicatorPosition = 0;
                                             int activeSegment = 0;
                                             
@@ -1536,7 +1839,6 @@ class _BearMapPageState extends State<BearMapPage> {
                                             
                                             return Column(
                                               children: [
-                                                // 5段階のセグメントバー
                                                 Row(
                                                   children: List.generate(5, (index) {
                                                     Color segmentColor;
@@ -1598,7 +1900,6 @@ class _BearMapPageState extends State<BearMapPage> {
                                                   }),
                                                 ),
                                                 const SizedBox(height: 6),
-                                                // ラベル
                                                 Row(
                                                   mainAxisAlignment: MainAxisAlignment.spaceAround,
                                                   children: const [
@@ -1615,7 +1916,6 @@ class _BearMapPageState extends State<BearMapPage> {
                                         ),
                                         const SizedBox(height: 10),
                                         
-                                        // 危険度レベル表示（修正版）
                                         if (_getDisplayMeshData() != null) ...[
                                           Center(
                                             child: Column(
@@ -1637,7 +1937,6 @@ class _BearMapPageState extends State<BearMapPage> {
                                                   ),
                                                 ),
                                                 const SizedBox(height: 4),
-                                                // デバッグ用：実際のスコア値を表示
                                                 Text(
                                                   'スコア: ${_getDisplayMeshData()!.score.toStringAsFixed(2)}',
                                                   style: const TextStyle(
@@ -1676,7 +1975,6 @@ class _BearMapPageState extends State<BearMapPage> {
                                   
                                   const SizedBox(height: 16),
                                   
-                                  // 情報へのリンクボタン
                                   Row(
                                     children: [
                                       Expanded(
@@ -1707,25 +2005,6 @@ class _BearMapPageState extends State<BearMapPage> {
                                     ],
                                   ),
 
-                                  // 更新日時
-                                  Container(
-                                    padding: const EdgeInsets.symmetric(vertical: 12),
-                                    child: Row(
-                                      mainAxisAlignment: MainAxisAlignment.center,
-                                      children: [
-                                        Icon(Icons.update, size: 12, color: Colors.grey.shade400),
-                                        const SizedBox(width: 4),
-                                        Text(
-                                          '最終更新: $lastUpdated',
-                                          style: TextStyle(
-                                            fontSize: 10,
-                                            color: Colors.grey.shade400,
-                                          ),
-                                        ),
-                                      ],
-                                    ),
-                                  ),
-
                                   const SizedBox(height: 20),
                                 ],
                               ),
@@ -1741,38 +2020,6 @@ class _BearMapPageState extends State<BearMapPage> {
     );
   }
 
-  // 統計カード
-  Widget _buildStatCard(String label, String value, Color bgColor, Color textColor) {
-    return Container(
-      padding: const EdgeInsets.all(12),
-      decoration: BoxDecoration(
-        color: bgColor,
-        borderRadius: BorderRadius.circular(12),
-      ),
-      child: Column(
-        children: [
-          Text(
-            value,
-            style: TextStyle(
-              fontSize: 20,
-              fontWeight: FontWeight.bold,
-              color: textColor,
-            ),
-          ),
-          const SizedBox(height: 4),
-          Text(
-            label,
-            style: const TextStyle(
-              fontSize: 11,
-              color: Colors.grey,
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
-  // 表示する位置情報を取得
   LatLng _getDisplayPosition() {
     if (activeInfoType == InfoType.currentLocation && currentPosition != null) {
       return LatLng(currentPosition!.latitude, currentPosition!.longitude);
@@ -1782,7 +2029,6 @@ class _BearMapPageState extends State<BearMapPage> {
     return const LatLng(0, 0);
   }
   
-  // 表示するメッシュデータを取得
   MeshData? _getDisplayMeshData() {
     if (activeInfoType == InfoType.currentLocation) {
       return currentLocationMeshData;
@@ -1792,7 +2038,6 @@ class _BearMapPageState extends State<BearMapPage> {
     return null;
   }
   
-  // 表示する住所情報を取得
   String? _getDisplayAddress() {
     if (activeInfoType == InfoType.currentLocation) {
       return currentLocationAddress;
@@ -1803,7 +2048,6 @@ class _BearMapPageState extends State<BearMapPage> {
   }
 }
 
-// データクラス群
 class MeshData {
   final String meshCode;
   final LatLng latLng;
