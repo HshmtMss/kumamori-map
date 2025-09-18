@@ -1636,8 +1636,8 @@ class _BearMapPageState extends State<BearMapPage> {
                                               borderRadius: BorderRadius.circular(20),
                                             ),
                                             child: Icon(
-                                              Icons.settings,
-                                              size: 20,
+                                              FontAwesomeIcons.gear,  // Icons.settingsからFontAwesome.gearに変更
+                                              size: 18,
                                               color: isSettingsPanelOpen 
                                                   ? Colors.brown.shade700 
                                                   : Colors.grey.shade600,
