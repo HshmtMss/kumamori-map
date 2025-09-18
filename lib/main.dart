@@ -7,6 +7,7 @@ import 'package:geolocator/geolocator.dart';
 import 'package:http/http.dart' as http;
 import 'package:url_launcher/url_launcher.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
+import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'dart:convert';
 import 'dart:math' as math;
 
@@ -269,7 +270,7 @@ class _BearMapPageState extends State<BearMapPage> {
                       mainAxisAlignment: MainAxisAlignment.spaceEvenly,
                       children: [
                         _buildShareOption(
-                          icon: Icons.close,
+                          icon: FontAwesomeIcons.xTwitter,
                           label: 'X',
                           color: Colors.black,
                           onTap: () {
@@ -278,7 +279,7 @@ class _BearMapPageState extends State<BearMapPage> {
                           },
                         ),
                         _buildShareOption(
-                          icon: Icons.facebook,
+                          icon: FontAwesomeIcons.facebookF,
                           label: 'Facebook',
                           color: const Color(0xFF4267B2),
                           onTap: () {
@@ -287,7 +288,7 @@ class _BearMapPageState extends State<BearMapPage> {
                           },
                         ),
                         _buildShareOption(
-                          icon: Icons.chat,
+                          icon: FontAwesomeIcons.line,
                           label: 'LINE',
                           color: const Color(0xFF00B900),
                           onTap: () {
@@ -304,7 +305,7 @@ class _BearMapPageState extends State<BearMapPage> {
                       mainAxisAlignment: MainAxisAlignment.spaceEvenly,
                       children: [
                         _buildShareOption(
-                          icon: Icons.camera_alt,
+                          icon: FontAwesomeIcons.instagram,
                           label: 'Instagram',
                           color: const Color(0xFFE4405F),
                           onTap: () {
@@ -2117,4 +2118,3 @@ class CustomPin {
     this.meshData,
   });
 }
-
