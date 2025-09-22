@@ -109,7 +109,7 @@ class _BearMapPageState extends State<BearMapPage> {
     String shareText = 'くまもりマップでクマ出没危険度をチェック！\n'
       '全国のクマ出没情報を地図で確認できます。\n\n'
       '安全な外出のためにぜひご活用ください。\n'
-      '#くまもりマップ #クマ出没 #安全確認 #登山 #ハイキング #キャンプ #アウトドア #トレッキング #自然散策 #野外活動 #山歩き #森林浴 #紅葉 #山菜取り';
+      '#くまもりマップ #クマ出没 #登山 #ハイキング #キャンプ #アウトドア #トレッキング #紅葉 #山菜取り';
 
     String appUrl = 'https://kumamori-map.netlify.app/';
     String encodedText = Uri.encodeComponent(shareText);
@@ -310,7 +310,7 @@ class _BearMapPageState extends State<BearMapPage> {
                             '全国のクマ出没情報を地図で確認できます。\n\n'
                             '安全な外出のためにぜひご活用ください。\n'
                             'https://kumamori-map.netlify.app/\n\n'
-                            '#くまもりマップ #クマ出没 #安全確認 #登山 #ハイキング #キャンプ #アウトドア #トレッキング #自然散策 #野外活動 #山歩き #森林浴 #紅葉 #山菜取り';
+                            '#くまもりマップ #クマ出没 #登山 #ハイキング #キャンプ #アウトドア #トレッキング #紅葉 #山菜取り';
                             
                             await Clipboard.setData(ClipboardData(text: shareText));
                             if (mounted) {
