@@ -1901,13 +1901,13 @@ class _BearMapPageState extends State<BearMapPage> {
                                   ),
                                   
                                   const SizedBox(height: 16),
-                                  
+
                                   Row(
                                     children: [
                                       Expanded(
                                         child: OutlinedButton.icon(
                                           onPressed: () => _showUsageDialog(context),
-                                          icon: Icon(Icons.info_outline, size: 18),
+                                          icon: Icon(FontAwesomeIcons.circleInfo, size: 18),  // Material Icons.info_outline → FontAwesome
                                           label: Text('ご利用にあたって'),
                                           style: OutlinedButton.styleFrom(
                                             padding: EdgeInsets.symmetric(vertical: 12),
@@ -1920,7 +1920,7 @@ class _BearMapPageState extends State<BearMapPage> {
                                       Expanded(
                                         child: OutlinedButton.icon(
                                           onPressed: () => _showMunicipalDialog(context),
-                                          icon: Icon(Icons.business, size: 18),
+                                          icon: Icon(FontAwesomeIcons.building, size: 18),  // Material Icons.business → FontAwesome
                                           label: Text('自治体の皆様へ'),
                                           style: OutlinedButton.styleFrom(
                                             padding: EdgeInsets.symmetric(vertical: 12),
@@ -1931,6 +1931,36 @@ class _BearMapPageState extends State<BearMapPage> {
                                       ),
                                     ],
                                   ),
+                                  
+                                  // Row(
+                                  //   children: [
+                                  //     Expanded(
+                                  //       child: OutlinedButton.icon(
+                                  //         onPressed: () => _showUsageDialog(context),
+                                  //         icon: Icon(Icons.info_outline, size: 18),
+                                  //         label: Text('ご利用にあたって'),
+                                  //         style: OutlinedButton.styleFrom(
+                                  //           padding: EdgeInsets.symmetric(vertical: 12),
+                                  //           side: BorderSide(color: Colors.brown.shade300),
+                                  //           foregroundColor: Colors.brown.shade700,
+                                  //         ),
+                                  //       ),
+                                  //     ),
+                                  //     const SizedBox(width: 12),
+                                  //     Expanded(
+                                  //       child: OutlinedButton.icon(
+                                  //         onPressed: () => _showMunicipalDialog(context),
+                                  //         icon: Icon(Icons.business, size: 18),
+                                  //         label: Text('自治体の皆様へ'),
+                                  //         style: OutlinedButton.styleFrom(
+                                  //           padding: EdgeInsets.symmetric(vertical: 12),
+                                  //           side: BorderSide(color: Colors.blue.shade300),
+                                  //           foregroundColor: Colors.blue.shade700,
+                                  //         ),
+                                  //       ),
+                                  //     ),
+                                  //   ],
+                                  // ),
 
                                   const SizedBox(height: 20),
                                 ],
