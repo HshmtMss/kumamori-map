@@ -88,7 +88,7 @@ class _BearMapPageState extends State<BearMapPage> {
   ];
   
   final DraggableScrollableController _draggableController = DraggableScrollableController();
-  final String lastUpdated = '2025年9月18日 9:30';
+  final String lastUpdated = '2025年9月22日 11:30';
   
   @override
   void initState() {
@@ -314,7 +314,7 @@ class _BearMapPageState extends State<BearMapPage> {
                           },
                         ),
                         _buildShareOption(
-                          icon: Icons.content_copy,
+                          icon: FontAwesomeIcons.copy,
                           label: 'コピー',
                           color: Colors.grey.shade600,
                           onTap: () async {
@@ -875,7 +875,7 @@ class _BearMapPageState extends State<BearMapPage> {
                 ),
                 const SizedBox(height: 8),
                 Text(
-                  '本マップは環境省の公開データ等を基に作成しています。5kmメッシュ単位でのクマ出没危険度を予測・表示しています。地域の参考情報としてご活用いただけます。',
+                  '本マップは環境省の公開データ等を基に作成しています。5kmメッシュ単位でのクマ出没危険度を予測表示しています。地域の参考情報としてご活用いただけます。',
                   style: TextStyle(
                     fontSize: 14,
                     color: Colors.grey.shade700,
@@ -1008,34 +1008,38 @@ class _BearMapPageState extends State<BearMapPage> {
                 ),
                 const SizedBox(height: 12),
                 Text(
-                  '連携いただける自治体様を募集しています。自治体様との連携により、より詳細で正確な地域情報の提供が可能です。',
+                  '熊の出没は、地域住民の安全や観光・農業に大きな影響を及ぼしています。'
+                  '当サイト「くまもりマップ」では、最新の出没情報を集約し、わかりやすく危険度を表示しています。\n\n'
+                  '自治体の皆さまと協力し、住民や観光客の安心・安全に役立つ仕組みづくりを進めています。\n'
+                  'ご関心のある自治体様は、どうぞお気軽にご相談ください。',
                   style: TextStyle(
                     fontSize: 14,
                     color: Colors.grey.shade700,
                     height: 1.5,
                   ),
                 ),
-                const SizedBox(height: 16),
-                Text(
-                  '連携メリット',
-                  style: TextStyle(
-                    fontSize: 16,
-                    fontWeight: FontWeight.bold,
-                    color: Colors.blue.shade800,
-                  ),
-                ),
-                const SizedBox(height: 8),
-                Text(
-                  '• リアルタイムでの出没情報更新\n'
-                  '• より細かい地域単位での危険度表示\n'
-                  '• 住民・観光客への効果的な注意喚起\n'
-                  '• 地域に特化したカスタマイズ',
-                  style: TextStyle(
-                    fontSize: 14,
-                    color: Colors.grey.shade700,
-                    height: 1.5,
-                  ),
-                ),
+                // const SizedBox(height: 16),
+                // Text(
+                //   '連携メリット',
+                //   style: TextStyle(
+                //     fontSize: 16,
+                //     fontWeight: FontWeight.bold,
+                //     color: Colors.blue.shade800,
+                //   ),
+                // ),
+                // const SizedBox(height: 8),
+                // Text(
+                //   '• クマ出没情報管理システムのご提供\n'
+                //   '• リアルタイムでの出没情報更新\n'
+                //   '• より細かい地域単位での危険度表示\n'
+                //   '• 住民・観光客への効果的な注意喚起\n'
+                //   '• 地域に特化したカスタマイズ',
+                //   style: TextStyle(
+                //     fontSize: 14,
+                //     color: Colors.grey.shade700,
+                //     height: 1.5,
+                //   ),
+                // ),
                 const SizedBox(height: 16),
                 Text(
                   'お問い合わせ',
@@ -1636,8 +1640,8 @@ class _BearMapPageState extends State<BearMapPage> {
                                               borderRadius: BorderRadius.circular(20),
                                             ),
                                             child: Icon(
-                                              Icons.settings,
-                                              size: 20,
+                                              FontAwesomeIcons.gear,  // Icons.settingsからFontAwesome.gearに変更
+                                              size: 18,
                                               color: isSettingsPanelOpen 
                                                   ? Colors.brown.shade700 
                                                   : Colors.grey.shade600,
@@ -1916,7 +1920,9 @@ class _BearMapPageState extends State<BearMapPage> {
                                           },
                                         ),
                                         const SizedBox(height: 10),
-                                        
+                                        // クマ危険度インジケーターの表示部分を修正
+                                        // main.dartの該当箇所（約1100行目付近）を以下のように変更
+
                                         if (_getDisplayMeshData() != null) ...[
                                           Center(
                                             child: Column(
@@ -1927,7 +1933,7 @@ class _BearMapPageState extends State<BearMapPage> {
                                                     fontSize: 20,
                                                     fontWeight: FontWeight.bold,
                                                     color: _getDisplayMeshData()!.score == 0
-                                                        ? Colors.cyan
+                                                        ? Colors.cyan  // 安全レベルの場合は水色
                                                         : _getDisplayMeshData()!.score < 2.0
                                                             ? Colors.green
                                                             : _getDisplayMeshData()!.score < 4.0
@@ -1948,14 +1954,14 @@ class _BearMapPageState extends State<BearMapPage> {
                                                 const SizedBox(height: 4),
                                                 Text(
                                                   _getDisplayMeshData()!.score == 0
-                                                      ? 'クマ出没の報告がない地域です'
+                                                      ? 'クマの出没報告がない地域です。'
                                                       : _getDisplayMeshData()!.score < 2.0
-                                                          ? 'クマ出没の報告は少ない地域です'
+                                                          ? 'クマの出没報告は少ない地域ですが\n' '山に入る際は基本的な注意を心がけましょう。'
                                                           : _getDisplayMeshData()!.score < 4.0
-                                                              ? 'クマ出没の報告がある地域です'
+                                                              ? '定期的にクマの出没報告がある地域です。\n' '山に入る際は十分に注意しましょう。'
                                                               : _getDisplayMeshData()!.score < 5.0
-                                                                  ? '最近、クマ出没の報告がある地域です'
-                                                                  : '最近、クマ出没の報告が多い地域です',
+                                                                  ? '最近クマの出没報告がある地域です。\n' '山に入る際は十分に注意しましょう。'
+                                                                  : '頻繁にクマの出没報告がある地域です。\n' '山や市街地との境界部でも十分な注意が必要です。',
                                                   style: const TextStyle(fontSize: 14, color: Colors.grey),
                                                   textAlign: TextAlign.center,
                                                 ),
@@ -1963,13 +1969,90 @@ class _BearMapPageState extends State<BearMapPage> {
                                             ),
                                           ),
                                         ] else ...[
-                                          const Center(
-                                            child: Text(
-                                              'クマ出没の報告がない地域です',
-                                              style: TextStyle(fontSize: 14, color: Colors.grey),
+                                          // データがない場合の表示
+                                          Center(
+                                            child: Column(
+                                              children: [
+                                                Text(
+                                                  '安全',
+                                                  style: TextStyle(
+                                                    fontSize: 20,
+                                                    fontWeight: FontWeight.bold,
+                                                    color: Colors.cyan,  // 安全レベルと同じ水色
+                                                  ),
+                                                ),
+                                                const SizedBox(height: 4),
+                                                Text(
+                                                  'スコア: 0.00',
+                                                  style: const TextStyle(
+                                                    fontSize: 12,
+                                                    color: Colors.grey,
+                                                  ),
+                                                ),
+                                                const SizedBox(height: 4),
+                                                const Text(
+                                                  'クマ出没の報告がない地域です',
+                                                  style: TextStyle(fontSize: 14, color: Colors.grey),
+                                                  textAlign: TextAlign.center,
+                                                ),
+                                              ],
                                             ),
                                           ),
                                         ],
+                                        
+                                        // if (_getDisplayMeshData() != null) ...[
+                                        //   Center(
+                                        //     child: Column(
+                                        //       children: [
+                                        //         Text(
+                                        //           getLevelText(_getDisplayMeshData()!.score),
+                                        //           style: TextStyle(
+                                        //             fontSize: 20,
+                                        //             fontWeight: FontWeight.bold,
+                                        //             color: _getDisplayMeshData()!.score == 0
+                                        //                 ? Colors.cyan
+                                        //                 : _getDisplayMeshData()!.score < 2.0
+                                        //                     ? Colors.green
+                                        //                     : _getDisplayMeshData()!.score < 4.0
+                                        //                         ? Colors.yellow.shade700
+                                        //                         : _getDisplayMeshData()!.score < 5.0
+                                        //                             ? Colors.orange
+                                        //                             : Colors.red,
+                                        //           ),
+                                        //         ),
+                                        //         const SizedBox(height: 4),
+                                        //         Text(
+                                        //           'スコア: ${_getDisplayMeshData()!.score.toStringAsFixed(2)}',
+                                        //           style: const TextStyle(
+                                        //             fontSize: 12,
+                                        //             color: Colors.grey,
+                                        //           ),
+                                        //         ),
+                                        //         const SizedBox(height: 4),
+                                        //         Text(
+                                        //           _getDisplayMeshData()!.score == 0
+                                        //               ? 'クマ出没の報告がない地域です'
+                                        //               : _getDisplayMeshData()!.score < 2.0
+                                        //                   ? 'クマ出没の報告は少ない地域です'
+                                        //                   : _getDisplayMeshData()!.score < 4.0
+                                        //                       ? 'クマ出没の報告がある地域です'
+                                        //                       : _getDisplayMeshData()!.score < 5.0
+                                        //                           ? '最近、クマ出没の報告がある地域です'
+                                        //                           : '最近、クマ出没の報告が多い地域です',
+                                        //           style: const TextStyle(fontSize: 14, color: Colors.grey),
+                                        //           textAlign: TextAlign.center,
+                                        //         ),
+                                        //       ],
+                                        //     ),
+                                        //   ),
+                                        // ] else ...[
+                                        //   const Center(
+                                        //     child: Text(
+                                        //       'クマ出没の報告がない地域です',
+                                        //       style: TextStyle(fontSize: 14, color: Colors.grey),
+                                        //     ),
+                                        //   ),
+                                        // ],
                                       ],
                                     ),
                                   ),
@@ -2010,6 +2093,41 @@ class _BearMapPageState extends State<BearMapPage> {
                                 ],
                               ),
                             ),
+                             // コピーライト追加
+                            Container(
+                              padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
+                              decoration: BoxDecoration(
+                                border: Border(
+                                  top: BorderSide(
+                                    color: Colors.grey.shade200,
+                                    width: 1,
+                                  ),
+                                ),
+                              ),
+                              child: Column(
+                                children: [
+                                  Text(
+                                    '© 2025 くまもりマップ',
+                                    style: TextStyle(
+                                      fontSize: 10,
+                                      color: Colors.grey.shade500,
+                                      fontWeight: FontWeight.w400,
+                                    ),
+                                    textAlign: TextAlign.center,
+                                  ),
+                                  const SizedBox(height: 4),
+                                  Text(
+                                    'All rights reserved.',
+                                    style: TextStyle(
+                                      fontSize: 9,
+                                      color: Colors.grey.shade400,
+                                      fontWeight: FontWeight.w300,
+                                    ),
+                                    textAlign: TextAlign.center,
+                                   ),
+                                  ],
+                                ),
+                              ),
                           ],
                         ),
                       ),

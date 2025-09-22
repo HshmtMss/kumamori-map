@@ -88,7 +88,7 @@ class _BearMapPageState extends State<BearMapPage> {
   ];
   
   final DraggableScrollableController _draggableController = DraggableScrollableController();
-  final String lastUpdated = '2025年9月18日 9:30';
+  final String lastUpdated = '2025年9月22日 11:30';
   
   @override
   void initState() {
@@ -631,7 +631,6 @@ class _BearMapPageState extends State<BearMapPage> {
       final lines = csvString.split('\n').where((line) => line.trim().isNotEmpty).toList();
       
       List<MeshData> tempList = [];
-      Map<String, MeshData> meshMap = {};
       
       int startIndex = 0;
       if (lines.isNotEmpty) {
@@ -656,47 +655,24 @@ class _BearMapPageState extends State<BearMapPage> {
           
           double score = calculateScore(second, sixth, latest, latestSingle);
           
-          if (score > 0) {
-            final latLng = meshCodeToLatLng(meshCode);
-            if (latLng != null) {
-              final meshData = MeshData(
-                meshCode: meshCode,
-                latLng: latLng,
-                score: score,
-                originalScore: score,
-                second: second,
-                sixth: sixth,
-                latest: latest,
-                latestSingle: latestSingle,
-              );
-              tempList.add(meshData);
-              meshMap[meshCode] = meshData;
-            }
+          final latLng = meshCodeToLatLng(meshCode);
+          if (latLng != null) {
+            final meshData = MeshData(
+              meshCode: meshCode,
+              latLng: latLng,
+              score: score,
+              originalScore: score,
+              second: second,
+              sixth: sixth,
+              latest: latest,
+              latestSingle: latestSingle,
+            );
+            tempList.add(meshData);
           }
         }
       }
       
-      for (var meshData in tempList) {
-        final neighbors = getNeighborMeshCodes(meshData.meshCode);
-        double neighborSum = 0;
-        int neighborCount = 0;
-        
-        for (var neighborCode in neighbors) {
-          if (meshMap.containsKey(neighborCode)) {
-            neighborSum += meshMap[neighborCode]!.originalScore;
-            neighborCount++;
-          }
-        }
-        
-        if (neighborCount > 0) {
-          double neighborAverage = neighborSum / neighborCount;
-          meshData.score = meshData.originalScore * 0.6 + neighborAverage * 0.4;
-          
-          if (neighborCount >= 6 && neighborAverage > 3.0 && meshData.originalScore <= 0.5) {
-            meshData.score = math.max(meshData.score, 1.6);
-          }
-        }
-      }
+      // 隣接セル処理を削除 - この部分を丸ごと削除
       
       setState(() {
         meshDataList = tempList;
@@ -714,56 +690,7 @@ class _BearMapPageState extends State<BearMapPage> {
     }
   }
 
-  List<String> getNeighborMeshCodes(String meshCode) {
-    if (meshCode.length < 8) return [];
-    
-    List<String> neighbors = [];
-    
-    final firstMesh = meshCode.substring(0, 4);
-    final secondLat = int.parse(meshCode.substring(4, 5));
-    final secondLng = int.parse(meshCode.substring(5, 6));
-    final thirdCode = int.parse(meshCode.substring(6, 8));
-    final thirdLat = thirdCode ~/ 10;
-    final thirdLng = thirdCode % 10;
-    
-    for (int dLat = -1; dLat <= 1; dLat++) {
-      for (int dLng = -1; dLng <= 1; dLng++) {
-        if (dLat == 0 && dLng == 0) continue;
-        
-        int newThirdLat = thirdLat + dLat;
-        int newThirdLng = thirdLng + dLng;
-        int newSecondLat = secondLat;
-        int newSecondLng = secondLng;
-        
-        if (newThirdLat < 0) {
-          newThirdLat = 1;
-          newSecondLat--;
-        } else if (newThirdLat > 1) {
-          newThirdLat = 0;
-          newSecondLat++;
-        }
-        
-        if (newThirdLng < 0) {
-          newThirdLng = 1;
-          newSecondLng--;
-        } else if (newThirdLng > 1) {
-          newThirdLng = 0;
-          newSecondLng++;
-        }
-        
-        if (newSecondLat >= 0 && newSecondLat <= 7 && 
-            newSecondLng >= 0 && newSecondLng <= 7) {
-          String neighborCode = firstMesh + 
-              newSecondLat.toString() + 
-              newSecondLng.toString() + 
-              (newThirdLat * 10 + newThirdLng).toString().padLeft(2, '0');
-          neighbors.add(neighborCode);
-        }
-      }
-    }
-    
-    return neighbors;
-  }
+  // getNeighborMeshCodes関数を削除 - 使用されなくなるため
 
   double calculateScore(int second, int sixth, int latest, int latestSingle) {
     double score = latest * 3.0 + sixth * 1.5 + second * 0.5;
@@ -1008,29 +935,10 @@ class _BearMapPageState extends State<BearMapPage> {
                 ),
                 const SizedBox(height: 12),
                 Text(
-                  '連携いただける自治体様を募集しています。自治体様との連携により、より詳細で正確な地域情報の提供が可能です。',
-                  style: TextStyle(
-                    fontSize: 14,
-                    color: Colors.grey.shade700,
-                    height: 1.5,
-                  ),
-                ),
-                const SizedBox(height: 16),
-                Text(
-                  '連携メリット',
-                  style: TextStyle(
-                    fontSize: 16,
-                    fontWeight: FontWeight.bold,
-                    color: Colors.blue.shade800,
-                  ),
-                ),
-                const SizedBox(height: 8),
-                Text(
-                  '• クマ出没情報管理システムのご提供\n'
-                  '• リアルタイムでの出没情報更新\n'
-                  '• より細かい地域単位での危険度表示\n'
-                  '• 住民・観光客への効果的な注意喚起\n'
-                  '• 地域に特化したカスタマイズ',
+                  '熊の出没は、地域住民の安全や観光・農業に大きな影響を及ぼしています。'
+                  '当サイト「くまもりマップ」では、最新の出没情報を集約し、わかりやすく危険度を表示しています。\n\n'
+                  '自治体の皆さまと協力し、住民や観光客の安心・安全に役立つ仕組みづくりを進めています。\n'
+                  'ご関心のある自治体様は、どうぞお気軽にご相談ください。',
                   style: TextStyle(
                     fontSize: 14,
                     color: Colors.grey.shade700,
@@ -1154,9 +1062,6 @@ class _BearMapPageState extends State<BearMapPage> {
                     ),
                     PolygonLayer(
                       polygons: meshDataList
-                          .where((data) {
-                            return data.score > 0;
-                          })
                           .map((data) {
                             final center = data.latLng;
                             final halfLat = 2.5 / 60.0 / 2.0;
@@ -1637,7 +1542,7 @@ class _BearMapPageState extends State<BearMapPage> {
                                               borderRadius: BorderRadius.circular(20),
                                             ),
                                             child: Icon(
-                                              FontAwesomeIcons.gear,  // Icons.settingsからFontAwesome.gearに変更
+                                              FontAwesomeIcons.gear,
                                               size: 18,
                                               color: isSettingsPanelOpen 
                                                   ? Colors.brown.shade700 
@@ -1662,7 +1567,6 @@ class _BearMapPageState extends State<BearMapPage> {
                                       child: Column(
                                         crossAxisAlignment: CrossAxisAlignment.start,
                                         children: [
-                                          // 地図スタイル設定
                                           Row(
                                             children: [
                                               Icon(Icons.map, size: 18, color: Colors.brown.shade700),
@@ -1732,7 +1636,6 @@ class _BearMapPageState extends State<BearMapPage> {
                                           
                                           const SizedBox(height: 20),
                                           
-                                          // ヒートマップ設定
                                           Row(
                                             children: [
                                               Icon(Icons.opacity, size: 18, color: Colors.brown.shade700),
@@ -1917,9 +1820,7 @@ class _BearMapPageState extends State<BearMapPage> {
                                           },
                                         ),
                                         const SizedBox(height: 10),
-                                        // クマ危険度インジケーターの表示部分を修正
-                                        // main.dartの該当箇所（約1100行目付近）を以下のように変更
-
+                                        
                                         if (_getDisplayMeshData() != null) ...[
                                           Center(
                                             child: Column(
@@ -1930,7 +1831,7 @@ class _BearMapPageState extends State<BearMapPage> {
                                                     fontSize: 20,
                                                     fontWeight: FontWeight.bold,
                                                     color: _getDisplayMeshData()!.score == 0
-                                                        ? Colors.cyan  // 安全レベルの場合は水色
+                                                        ? Colors.cyan
                                                         : _getDisplayMeshData()!.score < 2.0
                                                             ? Colors.green
                                                             : _getDisplayMeshData()!.score < 4.0
@@ -1951,14 +1852,14 @@ class _BearMapPageState extends State<BearMapPage> {
                                                 const SizedBox(height: 4),
                                                 Text(
                                                   _getDisplayMeshData()!.score == 0
-                                                      ? 'クマ出没の報告がない地域です'
+                                                      ? 'クマの出没報告がない地域です。'
                                                       : _getDisplayMeshData()!.score < 2.0
-                                                          ? 'クマ出没の報告は少ない地域です'
+                                                          ? 'クマの出没報告は少ない地域ですが\n' '山に入る際は基本的な注意を心がけましょう。'
                                                           : _getDisplayMeshData()!.score < 4.0
-                                                              ? 'クマ出没の報告がある地域です'
+                                                              ? '定期的にクマの出没報告がある地域です。\n' '山に入る際は十分に注意しましょう。'
                                                               : _getDisplayMeshData()!.score < 5.0
-                                                                  ? '最近、クマ出没の報告がある地域です'
-                                                                  : '最近、クマ出没の報告が多い地域です',
+                                                                  ? '最近クマの出没報告がある地域です。\n' '山に入る際は十分に注意しましょう。'
+                                                                  : '頻繁にクマの出没報告がある地域です。\n' '山や市街地との境界部でも十分な注意が必要です。',
                                                   style: const TextStyle(fontSize: 14, color: Colors.grey),
                                                   textAlign: TextAlign.center,
                                                 ),
@@ -1966,7 +1867,6 @@ class _BearMapPageState extends State<BearMapPage> {
                                             ),
                                           ),
                                         ] else ...[
-                                          // データがない場合の表示
                                           Center(
                                             child: Column(
                                               children: [
@@ -1975,7 +1875,7 @@ class _BearMapPageState extends State<BearMapPage> {
                                                   style: TextStyle(
                                                     fontSize: 20,
                                                     fontWeight: FontWeight.bold,
-                                                    color: Colors.cyan,  // 安全レベルと同じ水色
+                                                    color: Colors.cyan,
                                                   ),
                                                 ),
                                                 const SizedBox(height: 4),
@@ -1996,60 +1896,6 @@ class _BearMapPageState extends State<BearMapPage> {
                                             ),
                                           ),
                                         ],
-                                        
-                                        // if (_getDisplayMeshData() != null) ...[
-                                        //   Center(
-                                        //     child: Column(
-                                        //       children: [
-                                        //         Text(
-                                        //           getLevelText(_getDisplayMeshData()!.score),
-                                        //           style: TextStyle(
-                                        //             fontSize: 20,
-                                        //             fontWeight: FontWeight.bold,
-                                        //             color: _getDisplayMeshData()!.score == 0
-                                        //                 ? Colors.cyan
-                                        //                 : _getDisplayMeshData()!.score < 2.0
-                                        //                     ? Colors.green
-                                        //                     : _getDisplayMeshData()!.score < 4.0
-                                        //                         ? Colors.yellow.shade700
-                                        //                         : _getDisplayMeshData()!.score < 5.0
-                                        //                             ? Colors.orange
-                                        //                             : Colors.red,
-                                        //           ),
-                                        //         ),
-                                        //         const SizedBox(height: 4),
-                                        //         Text(
-                                        //           'スコア: ${_getDisplayMeshData()!.score.toStringAsFixed(2)}',
-                                        //           style: const TextStyle(
-                                        //             fontSize: 12,
-                                        //             color: Colors.grey,
-                                        //           ),
-                                        //         ),
-                                        //         const SizedBox(height: 4),
-                                        //         Text(
-                                        //           _getDisplayMeshData()!.score == 0
-                                        //               ? 'クマ出没の報告がない地域です'
-                                        //               : _getDisplayMeshData()!.score < 2.0
-                                        //                   ? 'クマ出没の報告は少ない地域です'
-                                        //                   : _getDisplayMeshData()!.score < 4.0
-                                        //                       ? 'クマ出没の報告がある地域です'
-                                        //                       : _getDisplayMeshData()!.score < 5.0
-                                        //                           ? '最近、クマ出没の報告がある地域です'
-                                        //                           : '最近、クマ出没の報告が多い地域です',
-                                        //           style: const TextStyle(fontSize: 14, color: Colors.grey),
-                                        //           textAlign: TextAlign.center,
-                                        //         ),
-                                        //       ],
-                                        //     ),
-                                        //   ),
-                                        // ] else ...[
-                                        //   const Center(
-                                        //     child: Text(
-                                        //       'クマ出没の報告がない地域です',
-                                        //       style: TextStyle(fontSize: 14, color: Colors.grey),
-                                        //     ),
-                                        //   ),
-                                        // ],
                                       ],
                                     ),
                                   ),
@@ -2090,7 +1936,7 @@ class _BearMapPageState extends State<BearMapPage> {
                                 ],
                               ),
                             ),
-                             // コピーライト追加
+                            
                             Container(
                               padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
                               decoration: BoxDecoration(
