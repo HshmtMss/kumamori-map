@@ -1905,32 +1905,108 @@ class _BearMapPageState extends State<BearMapPage> {
                                   Row(
                                     children: [
                                       Expanded(
-                                        child: OutlinedButton.icon(
-                                          onPressed: () => _showUsageDialog(context),
-                                          icon: Icon(FontAwesomeIcons.circleInfo, size: 18),  // Material Icons.info_outline → FontAwesome
-                                          label: Text('ご利用にあたって'),
-                                          style: OutlinedButton.styleFrom(
-                                            padding: EdgeInsets.symmetric(vertical: 12),
-                                            side: BorderSide(color: Colors.brown.shade300),
-                                            foregroundColor: Colors.brown.shade700,
+                                        child: Container(
+                                          height: 48, // 明示的な高さ指定
+                                          child: OutlinedButton(
+                                            onPressed: () => _showUsageDialog(context),
+                                            style: OutlinedButton.styleFrom(
+                                              padding: EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                                              side: BorderSide(color: Colors.brown.shade300),
+                                              foregroundColor: Colors.brown.shade700,
+                                            ),
+                                            child: Row(
+                                              mainAxisAlignment: MainAxisAlignment.center,
+                                              mainAxisSize: MainAxisSize.min,
+                                              children: [
+                                                Icon(
+                                                  FontAwesomeIcons.circleInfo, 
+                                                  size: 16, // サイズを少し小さく
+                                                  color: Colors.brown.shade700, // 明示的な色指定
+                                                ),
+                                                const SizedBox(width: 8),
+                                                Flexible(
+                                                  child: Text(
+                                                    'ご利用にあたって',
+                                                    style: TextStyle(
+                                                      fontSize: 13,
+                                                      color: Colors.brown.shade700,
+                                                    ),
+                                                    overflow: TextOverflow.ellipsis,
+                                                  ),
+                                                ),
+                                              ],
+                                            ),
                                           ),
                                         ),
                                       ),
                                       const SizedBox(width: 12),
                                       Expanded(
-                                        child: OutlinedButton.icon(
-                                          onPressed: () => _showMunicipalDialog(context),
-                                          icon: Icon(FontAwesomeIcons.building, size: 18),  // Material Icons.business → FontAwesome
-                                          label: Text('自治体の皆様へ'),
-                                          style: OutlinedButton.styleFrom(
-                                            padding: EdgeInsets.symmetric(vertical: 12),
-                                            side: BorderSide(color: Colors.blue.shade300),
-                                            foregroundColor: Colors.blue.shade700,
+                                        child: Container(
+                                          height: 48, // 明示的な高さ指定
+                                          child: OutlinedButton(
+                                            onPressed: () => _showMunicipalDialog(context),
+                                            style: OutlinedButton.styleFrom(
+                                              padding: EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                                              side: BorderSide(color: Colors.blue.shade300),
+                                              foregroundColor: Colors.blue.shade700,
+                                            ),
+                                            child: Row(
+                                              mainAxisAlignment: MainAxisAlignment.center,
+                                              mainAxisSize: MainAxisSize.min,
+                                              children: [
+                                                Icon(
+                                                  FontAwesomeIcons.building, 
+                                                  size: 16, // サイズを少し小さく
+                                                  color: Colors.blue.shade700, // 明示的な色指定
+                                                ),
+                                                const SizedBox(width: 8),
+                                                Flexible(
+                                                  child: Text(
+                                                    '自治体の皆様へ',
+                                                    style: TextStyle(
+                                                      fontSize: 13,
+                                                      color: Colors.blue.shade700,
+                                                    ),
+                                                    overflow: TextOverflow.ellipsis,
+                                                  ),
+                                                ),
+                                              ],
+                                            ),
                                           ),
                                         ),
                                       ),
                                     ],
                                   ),
+
+                                  // Row(
+                                  //   children: [
+                                  //     Expanded(
+                                  //       child: OutlinedButton.icon(
+                                  //         onPressed: () => _showUsageDialog(context),
+                                  //         icon: Icon(FontAwesomeIcons.circleInfo, size: 18),  // Material Icons.info_outline → FontAwesome
+                                  //         label: Text('ご利用にあたって'),
+                                  //         style: OutlinedButton.styleFrom(
+                                  //           padding: EdgeInsets.symmetric(vertical: 12),
+                                  //           side: BorderSide(color: Colors.brown.shade300),
+                                  //           foregroundColor: Colors.brown.shade700,
+                                  //         ),
+                                  //       ),
+                                  //     ),
+                                  //     const SizedBox(width: 12),
+                                  //     Expanded(
+                                  //       child: OutlinedButton.icon(
+                                  //         onPressed: () => _showMunicipalDialog(context),
+                                  //         icon: Icon(FontAwesomeIcons.building, size: 18),  // Material Icons.business → FontAwesome
+                                  //         label: Text('自治体の皆様へ'),
+                                  //         style: OutlinedButton.styleFrom(
+                                  //           padding: EdgeInsets.symmetric(vertical: 12),
+                                  //           side: BorderSide(color: Colors.blue.shade300),
+                                  //           foregroundColor: Colors.blue.shade700,
+                                  //         ),
+                                  //       ),
+                                  //     ),
+                                  //   ],
+                                  // ),
                                   
                                   // Row(
                                   //   children: [
