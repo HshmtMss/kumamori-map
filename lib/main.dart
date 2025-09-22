@@ -106,30 +106,10 @@ class _BearMapPageState extends State<BearMapPage> {
 
   // SNSシェア機能
   Future<void> _shareToSNS(String platform) async {
-    String shareText = '';
-    String? locationText = _getDisplayAddress();
-    String riskLevel = _getDisplayMeshData() != null 
-        ? getLevelText(_getDisplayMeshData()!.score) 
-        : '安全';
-    
-    if (activeInfoType == InfoType.currentLocation) {
-      shareText = '現在地のクマ出没危険度をチェックしました！\n'
-          '場所: ${locationText ?? '不明'}\n'
-          '危険度: $riskLevel\n\n'
-          'くまもりマップで安全な外出を！\n'
-          '#くまもりマップ #クマ出没 #安全確認';
-    } else if (selectedPin != null) {
-      shareText = 'クマ出没危険度をチェックしました！\n'
-          '場所: ${locationText ?? '選択地点'}\n'
-          '危険度: $riskLevel\n\n'
-          'くまもりマップで事前に危険度を確認しよう！\n'
-          '#くまもりマップ #クマ出没 #安全確認';
-    } else {
-      shareText = 'くまもりマップでクマ出没危険度をチェック！\n'
-          '全国のクマ出没情報を地図で確認できます。\n\n'
-          '安全な外出のためにぜひご活用ください。\n'
-          '#くまもりマップ #クマ出没 #安全確認';
-    }
+    String shareText = 'くまもりマップでクマ出没危険度をチェック！\n'
+      '全国のクマ出没情報を地図で確認できます。\n\n'
+      '安全な外出のためにぜひご活用ください。\n'
+      '#くまもりマップ #クマ出没 #安全確認 #登山 #ハイキング #キャンプ #アウトドア #トレッキング #自然散策 #野外活動 #山歩き #森林浴 #紅葉 #山菜取り';
 
     String appUrl = 'https://kumamori-map.netlify.app/';
     String encodedText = Uri.encodeComponent(shareText);
@@ -326,13 +306,11 @@ class _BearMapPageState extends State<BearMapPage> {
                                 ? getLevelText(_getDisplayMeshData()!.score) 
                                 : '安全';
                             
-                            if (activeInfoType == InfoType.currentLocation) {
-                              shareText = '現在地のクマ出没危険度: $riskLevel\n場所: ${locationText ?? '不明'}\n\nくまもりマップで安全確認！\nhttps://kumamori-map.netlify.app/';
-                            } else if (selectedPin != null) {
-                              shareText = 'クマ出没危険度: $riskLevel\n場所: ${locationText ?? '選択地点'}\n\nくまもりマップで安全確認！\nhttps://kumamori-map.netlify.app/';
-                            } else {
-                              shareText = 'くまもりマップでクマ出没危険度をチェック！\n安全な外出のためにご活用ください。\nhttps://kumamori-map.netlify.app/';
-                            }
+                            shareText = 'くまもりマップでクマ出没危険度をチェック！\n'
+                            '全国のクマ出没情報を地図で確認できます。\n\n'
+                            '安全な外出のためにぜひご活用ください。\n'
+                            'https://kumamori-map.netlify.app/\n\n'
+                            '#くまもりマップ #クマ出没 #安全確認 #登山 #ハイキング #キャンプ #アウトドア #トレッキング #自然散策 #野外活動 #山歩き #森林浴 #紅葉 #山菜取り';
                             
                             await Clipboard.setData(ClipboardData(text: shareText));
                             if (mounted) {
