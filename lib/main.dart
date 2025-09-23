@@ -10,7 +10,6 @@ import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'dart:convert';
 import 'dart:math' as math;
-import 'package:share_plus/share_plus.dart';
 
 void main() {
   runApp(const MyApp());
@@ -89,7 +88,7 @@ class _BearMapPageState extends State<BearMapPage> {
   ];
   
   final DraggableScrollableController _draggableController = DraggableScrollableController();
-  final String lastUpdated = '2025年9月23日 11:00';
+  final String lastUpdated = '2025年9月23日 12:10';
   
   @override
   void initState() {
@@ -105,8 +104,8 @@ class _BearMapPageState extends State<BearMapPage> {
     super.dispose();
   }
 
-  // シンプルで確実なシェア機能
-  // ハイブリッドシェア機能 - SNS直接シェア + ネイティブシェア
+  // SNSシェア機能
+  // SNSシェア機能 - Instagram削除版
   Future<void> _shareToSNS(String platform) async {
     String shareText = 'くまもりマップでクマ出没危険度をチェック！\n'
       '全国のクマ出没情報を地図で確認できます。\n\n'
@@ -114,29 +113,21 @@ class _BearMapPageState extends State<BearMapPage> {
       '#くまもりマップ #クマ出没 #登山 #ハイキング #キャンプ #アウトドア #トレッキング #紅葉 #山菜取り';
 
     String appUrl = 'https://kumamori-map.netlify.app/';
+    String encodedText = Uri.encodeComponent(shareText);
+    String encodedUrl = Uri.encodeComponent(appUrl);
     
     Uri? shareUri;
     
     switch (platform) {
       case 'x':
-        // Xはウェブ版を使用（最も安定）
-        String text = Uri.encodeComponent('$shareText\n$appUrl');
-        shareUri = Uri.parse('https://twitter.com/intent/tweet?text=$text');
+        shareUri = Uri.parse('https://twitter.com/intent/tweet?text=$encodedText&url=$encodedUrl');
         break;
-        
       case 'facebook':
-        // FacebookはURLのみでシェア（シンプルで確実）
-        String url = Uri.encodeComponent(appUrl);
-        shareUri = Uri.parse('https://www.facebook.com/sharer/sharer.php?u=$url');
+        shareUri = Uri.parse('https://www.facebook.com/sharer/sharer.php?u=$encodedUrl&quote=$encodedText');
         break;
-        
       case 'line':
-        // LINEはウェブ版を使用
-        String text = Uri.encodeComponent(shareText);
-        String url = Uri.encodeComponent(appUrl);
-        shareUri = Uri.parse('https://social-plugins.line.me/lineit/share?url=$url&text=$text');
+        shareUri = Uri.parse('https://social-plugins.line.me/lineit/share?url=$encodedUrl&text=$encodedText');
         break;
-        
       default:
         return;
     }
@@ -145,31 +136,18 @@ class _BearMapPageState extends State<BearMapPage> {
       if (await canLaunchUrl(shareUri)) {
         await launchUrl(shareUri, mode: LaunchMode.externalApplication);
       } else {
-        // 失敗した場合はネイティブシェアにフォールバック
-        await _shareWithNative();
+        await Clipboard.setData(ClipboardData(text: '$shareText\n$appUrl'));
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              content: Text('シェア内容をクリップボードにコピーしました'),
+              duration: Duration(seconds: 2),
+            ),
+          );
+        }
       }
     } catch (e) {
-      // エラーの場合もネイティブシェアにフォールバック
-      await _shareWithNative();
-    }
-  }
-
-  // ネイティブシェア機能
-  Future<void> _shareWithNative() async {
-    String shareText = 'くまもりマップでクマ出没危険度をチェック！\n'
-      '全国のクマ出没情報を地図で確認できます。\n\n'
-      '安全な外出のためにぜひご活用ください。\n\n'
-      'https://kumamori-map.netlify.app/\n\n'
-      '#くまもりマップ #クマ出没 #登山 #ハイキング #キャンプ #アウトドア #トレッキング #紅葉 #山菜取り';
-
-    try {
-      await Share.share(
-        shareText,
-        subject: 'くまもりマップ - クマ出没危険度マップ',
-      );
-    } catch (e) {
-      // 最終フォールバック: クリップボードにコピー
-      await Clipboard.setData(ClipboardData(text: shareText));
+      await Clipboard.setData(ClipboardData(text: '$shareText\n$appUrl'));
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(
@@ -181,45 +159,7 @@ class _BearMapPageState extends State<BearMapPage> {
     }
   }
 
-  // 位置情報付きネイティブシェア
-  Future<void> _shareLocationWithNative() async {
-    String locationInfo = '';
-    if (_getDisplayAddress() != null) {
-      locationInfo = '場所: ${_getDisplayAddress()}\n';
-    }
-    
-    String riskInfo = '';
-    if (_getDisplayMeshData() != null) {
-      riskInfo = 'クマ出没危険度: ${getLevelText(_getDisplayMeshData()!.score)}\n';
-    }
-
-    String shareText = 'くまもりマップでクマ出没危険度をチェック！\n\n'
-      '$locationInfo'
-      '$riskInfo\n'
-      '全国のクマ出没情報を地図で確認できます。\n'
-      '安全な外出のためにぜひご活用ください。\n\n'
-      'https://kumamori-map.netlify.app/\n\n'
-      '#くまもりマップ #クマ出没 #登山 #ハイキング #キャンプ #アウトドア';
-
-    try {
-      await Share.share(
-        shareText,
-        subject: 'くまもりマップ - 位置情報付きシェア',
-      );
-    } catch (e) {
-      await Clipboard.setData(ClipboardData(text: shareText));
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('シェア内容をクリップボードにコピーしました'),
-            duration: Duration(seconds: 2),
-          ),
-        );
-      }
-    }
-  }
-
-  // 改良されたシェアダイアログ
+  // SNSシェアダイアログを表示 - Instagram削除版
   void _showShareDialog(BuildContext context) {
     showModalBottomSheet(
       context: context,
@@ -267,7 +207,6 @@ class _BearMapPageState extends State<BearMapPage> {
                 padding: const EdgeInsets.all(20),
                 child: Column(
                   children: [
-                    // SNS直接シェア
                     Row(
                       mainAxisAlignment: MainAxisAlignment.spaceEvenly,
                       children: [
@@ -301,67 +240,43 @@ class _BearMapPageState extends State<BearMapPage> {
                       ],
                     ),
                     
-                    const SizedBox(height: 20),
+                    const SizedBox(height: 16),
                     
-                    // その他のシェア方法
-                    Container(
-                      padding: const EdgeInsets.symmetric(vertical: 8),
-                      child: Text(
-                        'その他の方法',
-                        style: TextStyle(
-                          fontSize: 14,
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        _buildShareOption(
+                          icon: FontAwesomeIcons.copy,
+                          label: 'コピー',
                           color: Colors.grey.shade600,
-                          fontWeight: FontWeight.w500,
-                        ),
-                      ),
-                    ),
-                    
-                    const SizedBox(height: 8),
-                    
-                    // ネイティブシェアボタン
-                    SizedBox(
-                      width: double.infinity,
-                      child: ElevatedButton.icon(
-                        onPressed: () {
-                          Navigator.pop(context);
-                          _shareWithNative();
-                        },
-                        icon: const Icon(Icons.share, size: 20),
-                        label: const Text('端末のシェア機能を使う'),
-                        style: ElevatedButton.styleFrom(
-                          backgroundColor: Colors.brown.shade600,
-                          foregroundColor: Colors.white,
-                          padding: const EdgeInsets.symmetric(vertical: 12),
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(8),
-                          ),
-                        ),
-                      ),
-                    ),
-                    
-                    const SizedBox(height: 8),
-                    
-                    // 位置情報付きシェア
-                    if (activeInfoType != null)
-                      SizedBox(
-                        width: double.infinity,
-                        child: ElevatedButton.icon(
-                          onPressed: () {
+                          onTap: () async {
                             Navigator.pop(context);
-                            _shareLocationWithNative();
+                            
+                            String shareText = '';
+                            String? locationText = _getDisplayAddress();
+                            String riskLevel = _getDisplayMeshData() != null 
+                                ? getLevelText(_getDisplayMeshData()!.score) 
+                                : '安全';
+                            
+                            shareText = 'くまもりマップでクマ出没危険度をチェック！\n'
+                            '全国のクマ出没情報を地図で確認できます。\n\n'
+                            '安全な外出のためにぜひご活用ください。\n'
+                            'https://kumamori-map.netlify.app/\n\n'
+                            '#くまもりマップ #クマ出没 #登山 #ハイキング #キャンプ #アウトドア #トレッキング #紅葉 #山菜取り';
+                            
+                            await Clipboard.setData(ClipboardData(text: shareText));
+                            if (mounted) {
+                              ScaffoldMessenger.of(context).showSnackBar(
+                                const SnackBar(
+                                  content: Text('クリップボードにコピーしました'),
+                                  duration: Duration(seconds: 2),
+                                ),
+                              );
+                            }
                           },
-                          icon: const Icon(Icons.location_on, size: 20),
-                          label: const Text('現在地の危険度も含めてシェア'),
-                          style: ElevatedButton.styleFrom(
-                            backgroundColor: Colors.blue.shade600,
-                            foregroundColor: Colors.white,
-                            padding: const EdgeInsets.symmetric(vertical: 12),
-                            shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(8),
-                            ),
-                          ),
                         ),
-                      ),
+                      ],
+                    ),
                   ],
                 ),
               ),
