@@ -105,6 +105,8 @@ class _BearMapPageState extends State<BearMapPage> {
   }
 
   // SNSシェア機能
+  // SNSシェア機能 - Instagram削除版
+  // SNSシェア機能 - 修正版
   Future<void> _shareToSNS(String platform) async {
     String shareText = 'くまもりマップでクマ出没危険度をチェック！\n'
       '全国のクマ出没情報を地図で確認できます。\n\n'
@@ -112,89 +114,80 @@ class _BearMapPageState extends State<BearMapPage> {
       '#くまもりマップ #クマ出没 #登山 #ハイキング #キャンプ #アウトドア #トレッキング #紅葉 #山菜取り';
 
     String appUrl = 'https://kumamori-map.netlify.app/';
-    String encodedText = Uri.encodeComponent(shareText);
-    String encodedUrl = Uri.encodeComponent(appUrl);
     
     Uri? shareUri;
     
     switch (platform) {
       case 'x':
+        // Xの場合は従来通り
+        String encodedText = Uri.encodeComponent(shareText);
+        String encodedUrl = Uri.encodeComponent(appUrl);
         shareUri = Uri.parse('https://twitter.com/intent/tweet?text=$encodedText&url=$encodedUrl');
         break;
+        
       case 'facebook':
-        shareUri = Uri.parse('https://www.facebook.com/sharer/sharer.php?u=$encodedUrl&quote=$encodedText');
-        break;
-      case 'line':
-        shareUri = Uri.parse('https://social-plugins.line.me/lineit/share?url=$encodedUrl&text=$encodedText');
-        break;
-      case 'instagram':
+        // Facebookはスマホアプリ対応のため、パラメータを簡略化
         try {
-          shareUri = Uri.parse('instagram://');
+          // モバイルアプリを試行
+          shareUri = Uri.parse('fb://share/?link=${Uri.encodeComponent(appUrl)}');
           if (await canLaunchUrl(shareUri)) {
             await launchUrl(shareUri, mode: LaunchMode.externalApplication);
-            await Clipboard.setData(ClipboardData(text: '$shareText\n$appUrl'));
-            if (mounted) {
-              ScaffoldMessenger.of(context).showSnackBar(
-                const SnackBar(
-                  content: Text('インスタグラムが開きました。シェア内容をクリップボードにコピーしました。'),
-                  duration: Duration(seconds: 3),
-                ),
-              );
-            }
-          } else {
-            shareUri = Uri.parse('https://www.instagram.com/');
-            await launchUrl(shareUri, mode: LaunchMode.externalApplication);
-            await Clipboard.setData(ClipboardData(text: '$shareText\n$appUrl'));
-            if (mounted) {
-              ScaffoldMessenger.of(context).showSnackBar(
-                const SnackBar(
-                  content: Text('インスタグラムのウェブ版が開きました。シェア内容をクリップボードにコピーしました。'),
-                  duration: Duration(seconds: 3),
-                ),
-              );
-            }
+            return;
           }
-          return;
         } catch (e) {
-          await Clipboard.setData(ClipboardData(text: '$shareText\n$appUrl'));
-          if (mounted) {
-            ScaffoldMessenger.of(context).showSnackBar(
-              const SnackBar(
-                content: Text('シェア内容をクリップボードにコピーしました'),
-                duration: Duration(seconds: 2),
-              ),
-            );
-          }
-          return;
+          // アプリが利用できない場合
         }
+        
+        // ウェブ版にフォールバック（シンプルなパラメータ）
+        shareUri = Uri.parse('https://www.facebook.com/sharer/sharer.php?u=${Uri.encodeComponent(appUrl)}');
+        break;
+        
+      case 'line':
+        // LINEの場合、モバイルとデスクトップで異なる処理
+        try {
+          // モバイルLINEアプリを試行
+          String lineText = '$shareText\n$appUrl';
+          shareUri = Uri.parse('line://msg/text/${Uri.encodeComponent(lineText)}');
+          if (await canLaunchUrl(shareUri)) {
+            await launchUrl(shareUri, mode: LaunchMode.externalApplication);
+            return;
+          }
+        } catch (e) {
+          // LINEアプリが利用できない場合
+        }
+        
+        // ウェブ版LINEにフォールバック
+        String lineWebText = '$shareText\n$appUrl';
+        shareUri = Uri.parse('https://social-plugins.line.me/lineit/share?url=${Uri.encodeComponent(appUrl)}&text=${Uri.encodeComponent(shareText)}');
+        break;
+        
       default:
         return;
     }
 
     try {
-      if (await canLaunchUrl(shareUri)) {
+      if (shareUri != null && await canLaunchUrl(shareUri)) {
         await launchUrl(shareUri, mode: LaunchMode.externalApplication);
       } else {
-        await Clipboard.setData(ClipboardData(text: '$shareText\n$appUrl'));
-        if (mounted) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(
-              content: Text('シェア内容をクリップボードにコピーしました'),
-              duration: Duration(seconds: 2),
-            ),
-          );
-        }
+        // 全て失敗した場合はクリップボードにコピー
+        await _copyToClipboard(shareText, appUrl);
       }
     } catch (e) {
-      await Clipboard.setData(ClipboardData(text: '$shareText\n$appUrl'));
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('シェア内容をクリップボードにコピーしました'),
-            duration: Duration(seconds: 2),
-          ),
-        );
-      }
+      // エラーが発生した場合もクリップボードにコピー
+      await _copyToClipboard(shareText, appUrl);
+    }
+  }
+
+  // クリップボードコピー用のヘルパーメソッド
+  Future<void> _copyToClipboard(String shareText, String appUrl) async {
+    await Clipboard.setData(ClipboardData(text: '$shareText\n$appUrl'));
+    if (mounted) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('シェア内容をクリップボードにコピーしました'),
+          duration: Duration(seconds: 2),
+        ),
+      );
     }
   }
 
@@ -282,17 +275,8 @@ class _BearMapPageState extends State<BearMapPage> {
                     const SizedBox(height: 16),
                     
                     Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                      mainAxisAlignment: MainAxisAlignment.center,
                       children: [
-                        _buildShareOption(
-                          icon: FontAwesomeIcons.instagram,
-                          label: 'Instagram',
-                          color: const Color(0xFFE4405F),
-                          onTap: () {
-                            Navigator.pop(context);
-                            _shareToSNS('instagram');
-                          },
-                        ),
                         _buildShareOption(
                           icon: FontAwesomeIcons.copy,
                           label: 'コピー',
@@ -300,13 +284,7 @@ class _BearMapPageState extends State<BearMapPage> {
                           onTap: () async {
                             Navigator.pop(context);
                             
-                            String shareText = '';
-                            String? locationText = _getDisplayAddress();
-                            String riskLevel = _getDisplayMeshData() != null 
-                                ? getLevelText(_getDisplayMeshData()!.score) 
-                                : '安全';
-                            
-                            shareText = 'くまもりマップでクマ出没危険度をチェック！\n'
+                            String shareText = 'くまもりマップでクマ出没危険度をチェック！\n'
                             '全国のクマ出没情報を地図で確認できます。\n\n'
                             '安全な外出のためにぜひご活用ください。\n'
                             'https://kumamori-map.netlify.app/\n\n'
@@ -323,7 +301,6 @@ class _BearMapPageState extends State<BearMapPage> {
                             }
                           },
                         ),
-                        const SizedBox(width: 64),
                       ],
                     ),
                   ],
@@ -336,6 +313,237 @@ class _BearMapPageState extends State<BearMapPage> {
       },
     );
   }
+  // Future<void> _shareToSNS(String platform) async {
+  //   String shareText = 'くまもりマップでクマ出没危険度をチェック！\n'
+  //     '全国のクマ出没情報を地図で確認できます。\n\n'
+  //     '安全な外出のためにぜひご活用ください。\n'
+  //     '#くまもりマップ #クマ出没 #登山 #ハイキング #キャンプ #アウトドア #トレッキング #紅葉 #山菜取り';
+
+  //   String appUrl = 'https://kumamori-map.netlify.app/';
+  //   String encodedText = Uri.encodeComponent(shareText);
+  //   String encodedUrl = Uri.encodeComponent(appUrl);
+    
+  //   Uri? shareUri;
+    
+  //   switch (platform) {
+  //     case 'x':
+  //       shareUri = Uri.parse('https://twitter.com/intent/tweet?text=$encodedText&url=$encodedUrl');
+  //       break;
+  //     case 'facebook':
+  //       shareUri = Uri.parse('https://www.facebook.com/sharer/sharer.php?u=$encodedUrl&quote=$encodedText');
+  //       break;
+  //     case 'line':
+  //       shareUri = Uri.parse('https://social-plugins.line.me/lineit/share?url=$encodedUrl&text=$encodedText');
+  //       break;
+  //     case 'instagram':
+  //       try {
+  //         shareUri = Uri.parse('instagram://');
+  //         if (await canLaunchUrl(shareUri)) {
+  //           await launchUrl(shareUri, mode: LaunchMode.externalApplication);
+  //           await Clipboard.setData(ClipboardData(text: '$shareText\n$appUrl'));
+  //           if (mounted) {
+  //             ScaffoldMessenger.of(context).showSnackBar(
+  //               const SnackBar(
+  //                 content: Text('インスタグラムが開きました。シェア内容をクリップボードにコピーしました。'),
+  //                 duration: Duration(seconds: 3),
+  //               ),
+  //             );
+  //           }
+  //         } else {
+  //           shareUri = Uri.parse('https://www.instagram.com/');
+  //           await launchUrl(shareUri, mode: LaunchMode.externalApplication);
+  //           await Clipboard.setData(ClipboardData(text: '$shareText\n$appUrl'));
+  //           if (mounted) {
+  //             ScaffoldMessenger.of(context).showSnackBar(
+  //               const SnackBar(
+  //                 content: Text('インスタグラムのウェブ版が開きました。シェア内容をクリップボードにコピーしました。'),
+  //                 duration: Duration(seconds: 3),
+  //               ),
+  //             );
+  //           }
+  //         }
+  //         return;
+  //       } catch (e) {
+  //         await Clipboard.setData(ClipboardData(text: '$shareText\n$appUrl'));
+  //         if (mounted) {
+  //           ScaffoldMessenger.of(context).showSnackBar(
+  //             const SnackBar(
+  //               content: Text('シェア内容をクリップボードにコピーしました'),
+  //               duration: Duration(seconds: 2),
+  //             ),
+  //           );
+  //         }
+  //         return;
+  //       }
+  //     default:
+  //       return;
+  //   }
+
+  //   try {
+  //     if (await canLaunchUrl(shareUri)) {
+  //       await launchUrl(shareUri, mode: LaunchMode.externalApplication);
+  //     } else {
+  //       await Clipboard.setData(ClipboardData(text: '$shareText\n$appUrl'));
+  //       if (mounted) {
+  //         ScaffoldMessenger.of(context).showSnackBar(
+  //           const SnackBar(
+  //             content: Text('シェア内容をクリップボードにコピーしました'),
+  //             duration: Duration(seconds: 2),
+  //           ),
+  //         );
+  //       }
+  //     }
+  //   } catch (e) {
+  //     await Clipboard.setData(ClipboardData(text: '$shareText\n$appUrl'));
+  //     if (mounted) {
+  //       ScaffoldMessenger.of(context).showSnackBar(
+  //         const SnackBar(
+  //           content: Text('シェア内容をクリップボードにコピーしました'),
+  //           duration: Duration(seconds: 2),
+  //         ),
+  //       );
+  //     }
+  //   }
+  // }
+
+  // // SNSシェアダイアログを表示
+  // void _showShareDialog(BuildContext context) {
+  //   showModalBottomSheet(
+  //     context: context,
+  //     backgroundColor: Colors.transparent,
+  //     builder: (BuildContext context) {
+  //       return Container(
+  //         decoration: const BoxDecoration(
+  //           color: Colors.white,
+  //           borderRadius: BorderRadius.only(
+  //             topLeft: Radius.circular(20),
+  //             topRight: Radius.circular(20),
+  //           ),
+  //         ),
+  //         child: Column(
+  //           mainAxisSize: MainAxisSize.min,
+  //           children: [
+  //             Container(
+  //               margin: const EdgeInsets.symmetric(vertical: 12),
+  //               width: 40,
+  //               height: 4,
+  //               decoration: BoxDecoration(
+  //                 color: Colors.grey[300],
+  //                 borderRadius: BorderRadius.circular(2),
+  //               ),
+  //             ),
+              
+  //             Padding(
+  //               padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 8),
+  //               child: Row(
+  //                 children: [
+  //                   Icon(Icons.share, color: Colors.brown.shade700),
+  //                   const SizedBox(width: 8),
+  //                   const Text(
+  //                     'シェアする',
+  //                     style: TextStyle(
+  //                       fontSize: 18,
+  //                       fontWeight: FontWeight.bold,
+  //                     ),
+  //                   ),
+  //                 ],
+  //               ),
+  //             ),
+              
+  //             Padding(
+  //               padding: const EdgeInsets.all(20),
+  //               child: Column(
+  //                 children: [
+  //                   Row(
+  //                     mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+  //                     children: [
+  //                       _buildShareOption(
+  //                         icon: FontAwesomeIcons.xTwitter,
+  //                         label: 'X',
+  //                         color: Colors.black,
+  //                         onTap: () {
+  //                           Navigator.pop(context);
+  //                           _shareToSNS('x');
+  //                         },
+  //                       ),
+  //                       _buildShareOption(
+  //                         icon: FontAwesomeIcons.facebookF,
+  //                         label: 'Facebook',
+  //                         color: const Color(0xFF4267B2),
+  //                         onTap: () {
+  //                           Navigator.pop(context);
+  //                           _shareToSNS('facebook');
+  //                         },
+  //                       ),
+  //                       _buildShareOption(
+  //                         icon: FontAwesomeIcons.line,
+  //                         label: 'LINE',
+  //                         color: const Color(0xFF00B900),
+  //                         onTap: () {
+  //                           Navigator.pop(context);
+  //                           _shareToSNS('line');
+  //                         },
+  //                       ),
+  //                     ],
+  //                   ),
+                    
+  //                   const SizedBox(height: 16),
+                    
+  //                   Row(
+  //                     mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+  //                     children: [
+  //                       _buildShareOption(
+  //                         icon: FontAwesomeIcons.instagram,
+  //                         label: 'Instagram',
+  //                         color: const Color(0xFFE4405F),
+  //                         onTap: () {
+  //                           Navigator.pop(context);
+  //                           _shareToSNS('instagram');
+  //                         },
+  //                       ),
+  //                       _buildShareOption(
+  //                         icon: FontAwesomeIcons.copy,
+  //                         label: 'コピー',
+  //                         color: Colors.grey.shade600,
+  //                         onTap: () async {
+  //                           Navigator.pop(context);
+                            
+  //                           String shareText = '';
+  //                           String? locationText = _getDisplayAddress();
+  //                           String riskLevel = _getDisplayMeshData() != null 
+  //                               ? getLevelText(_getDisplayMeshData()!.score) 
+  //                               : '安全';
+                            
+  //                           shareText = 'くまもりマップでクマ出没危険度をチェック！\n'
+  //                           '全国のクマ出没情報を地図で確認できます。\n\n'
+  //                           '安全な外出のためにぜひご活用ください。\n'
+  //                           'https://kumamori-map.netlify.app/\n\n'
+  //                           '#くまもりマップ #クマ出没 #登山 #ハイキング #キャンプ #アウトドア #トレッキング #紅葉 #山菜取り';
+                            
+  //                           await Clipboard.setData(ClipboardData(text: shareText));
+  //                           if (mounted) {
+  //                             ScaffoldMessenger.of(context).showSnackBar(
+  //                               const SnackBar(
+  //                                 content: Text('クリップボードにコピーしました'),
+  //                                 duration: Duration(seconds: 2),
+  //                               ),
+  //                             );
+  //                           }
+  //                         },
+  //                       ),
+  //                       const SizedBox(width: 64),
+  //                     ],
+  //                   ),
+  //                 ],
+  //               ),
+  //             ),
+  //             const SizedBox(height: 20),
+  //           ],
+  //         ),
+  //       );
+  //     },
+  //   );
+  // }
 
   Widget _buildShareOption({
     required IconData icon,

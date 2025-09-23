@@ -88,7 +88,7 @@ class _BearMapPageState extends State<BearMapPage> {
   ];
   
   final DraggableScrollableController _draggableController = DraggableScrollableController();
-  final String lastUpdated = '2025年9月22日 11:30';
+  final String lastUpdated = '2025年9月22日 12:10';
   
   @override
   void initState() {
@@ -105,31 +105,12 @@ class _BearMapPageState extends State<BearMapPage> {
   }
 
   // SNSシェア機能
+  // SNSシェア機能 - Instagram削除版
   Future<void> _shareToSNS(String platform) async {
-    String shareText = '';
-    String? locationText = _getDisplayAddress();
-    String riskLevel = _getDisplayMeshData() != null 
-        ? getLevelText(_getDisplayMeshData()!.score) 
-        : '安全';
-    
-    if (activeInfoType == InfoType.currentLocation) {
-      shareText = '現在地のクマ出没危険度をチェックしました！\n'
-          '場所: ${locationText ?? '不明'}\n'
-          '危険度: $riskLevel\n\n'
-          'くまもりマップで安全な外出を！\n'
-          '#くまもりマップ #クマ出没 #安全確認';
-    } else if (selectedPin != null) {
-      shareText = 'クマ出没危険度をチェックしました！\n'
-          '場所: ${locationText ?? '選択地点'}\n'
-          '危険度: $riskLevel\n\n'
-          'くまもりマップで事前に危険度を確認しよう！\n'
-          '#くまもりマップ #クマ出没 #安全確認';
-    } else {
-      shareText = 'くまもりマップでクマ出没危険度をチェック！\n'
-          '全国のクマ出没情報を地図で確認できます。\n\n'
-          '安全な外出のためにぜひご活用ください。\n'
-          '#くまもりマップ #クマ出没 #安全確認';
-    }
+    String shareText = 'くまもりマップでクマ出没危険度をチェック！\n'
+      '全国のクマ出没情報を地図で確認できます。\n\n'
+      '安全な外出のためにぜひご活用ください。\n'
+      '#くまもりマップ #クマ出没 #登山 #ハイキング #キャンプ #アウトドア #トレッキング #紅葉 #山菜取り';
 
     String appUrl = 'https://kumamori-map.netlify.app/';
     String encodedText = Uri.encodeComponent(shareText);
@@ -147,46 +128,6 @@ class _BearMapPageState extends State<BearMapPage> {
       case 'line':
         shareUri = Uri.parse('https://social-plugins.line.me/lineit/share?url=$encodedUrl&text=$encodedText');
         break;
-      case 'instagram':
-        try {
-          shareUri = Uri.parse('instagram://');
-          if (await canLaunchUrl(shareUri)) {
-            await launchUrl(shareUri, mode: LaunchMode.externalApplication);
-            await Clipboard.setData(ClipboardData(text: '$shareText\n$appUrl'));
-            if (mounted) {
-              ScaffoldMessenger.of(context).showSnackBar(
-                const SnackBar(
-                  content: Text('インスタグラムが開きました。シェア内容をクリップボードにコピーしました。'),
-                  duration: Duration(seconds: 3),
-                ),
-              );
-            }
-          } else {
-            shareUri = Uri.parse('https://www.instagram.com/');
-            await launchUrl(shareUri, mode: LaunchMode.externalApplication);
-            await Clipboard.setData(ClipboardData(text: '$shareText\n$appUrl'));
-            if (mounted) {
-              ScaffoldMessenger.of(context).showSnackBar(
-                const SnackBar(
-                  content: Text('インスタグラムのウェブ版が開きました。シェア内容をクリップボードにコピーしました。'),
-                  duration: Duration(seconds: 3),
-                ),
-              );
-            }
-          }
-          return;
-        } catch (e) {
-          await Clipboard.setData(ClipboardData(text: '$shareText\n$appUrl'));
-          if (mounted) {
-            ScaffoldMessenger.of(context).showSnackBar(
-              const SnackBar(
-                content: Text('シェア内容をクリップボードにコピーしました'),
-                duration: Duration(seconds: 2),
-              ),
-            );
-          }
-          return;
-        }
       default:
         return;
     }
@@ -218,7 +159,7 @@ class _BearMapPageState extends State<BearMapPage> {
     }
   }
 
-  // SNSシェアダイアログを表示
+  // SNSシェアダイアログを表示 - Instagram削除版
   void _showShareDialog(BuildContext context) {
     showModalBottomSheet(
       context: context,
@@ -302,17 +243,8 @@ class _BearMapPageState extends State<BearMapPage> {
                     const SizedBox(height: 16),
                     
                     Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                      mainAxisAlignment: MainAxisAlignment.center,
                       children: [
-                        _buildShareOption(
-                          icon: FontAwesomeIcons.instagram,
-                          label: 'Instagram',
-                          color: const Color(0xFFE4405F),
-                          onTap: () {
-                            Navigator.pop(context);
-                            _shareToSNS('instagram');
-                          },
-                        ),
                         _buildShareOption(
                           icon: FontAwesomeIcons.copy,
                           label: 'コピー',
@@ -326,13 +258,11 @@ class _BearMapPageState extends State<BearMapPage> {
                                 ? getLevelText(_getDisplayMeshData()!.score) 
                                 : '安全';
                             
-                            if (activeInfoType == InfoType.currentLocation) {
-                              shareText = '現在地のクマ出没危険度: $riskLevel\n場所: ${locationText ?? '不明'}\n\nくまもりマップで安全確認！\nhttps://kumamori-map.netlify.app/';
-                            } else if (selectedPin != null) {
-                              shareText = 'クマ出没危険度: $riskLevel\n場所: ${locationText ?? '選択地点'}\n\nくまもりマップで安全確認！\nhttps://kumamori-map.netlify.app/';
-                            } else {
-                              shareText = 'くまもりマップでクマ出没危険度をチェック！\n安全な外出のためにご活用ください。\nhttps://kumamori-map.netlify.app/';
-                            }
+                            shareText = 'くまもりマップでクマ出没危険度をチェック！\n'
+                            '全国のクマ出没情報を地図で確認できます。\n\n'
+                            '安全な外出のためにぜひご活用ください。\n'
+                            'https://kumamori-map.netlify.app/\n\n'
+                            '#くまもりマップ #クマ出没 #登山 #ハイキング #キャンプ #アウトドア #トレッキング #紅葉 #山菜取り';
                             
                             await Clipboard.setData(ClipboardData(text: shareText));
                             if (mounted) {
@@ -345,7 +275,6 @@ class _BearMapPageState extends State<BearMapPage> {
                             }
                           },
                         ),
-                        const SizedBox(width: 64),
                       ],
                     ),
                   ],
@@ -358,6 +287,237 @@ class _BearMapPageState extends State<BearMapPage> {
       },
     );
   }
+  // Future<void> _shareToSNS(String platform) async {
+  //   String shareText = 'くまもりマップでクマ出没危険度をチェック！\n'
+  //     '全国のクマ出没情報を地図で確認できます。\n\n'
+  //     '安全な外出のためにぜひご活用ください。\n'
+  //     '#くまもりマップ #クマ出没 #登山 #ハイキング #キャンプ #アウトドア #トレッキング #紅葉 #山菜取り';
+
+  //   String appUrl = 'https://kumamori-map.netlify.app/';
+  //   String encodedText = Uri.encodeComponent(shareText);
+  //   String encodedUrl = Uri.encodeComponent(appUrl);
+    
+  //   Uri? shareUri;
+    
+  //   switch (platform) {
+  //     case 'x':
+  //       shareUri = Uri.parse('https://twitter.com/intent/tweet?text=$encodedText&url=$encodedUrl');
+  //       break;
+  //     case 'facebook':
+  //       shareUri = Uri.parse('https://www.facebook.com/sharer/sharer.php?u=$encodedUrl&quote=$encodedText');
+  //       break;
+  //     case 'line':
+  //       shareUri = Uri.parse('https://social-plugins.line.me/lineit/share?url=$encodedUrl&text=$encodedText');
+  //       break;
+  //     case 'instagram':
+  //       try {
+  //         shareUri = Uri.parse('instagram://');
+  //         if (await canLaunchUrl(shareUri)) {
+  //           await launchUrl(shareUri, mode: LaunchMode.externalApplication);
+  //           await Clipboard.setData(ClipboardData(text: '$shareText\n$appUrl'));
+  //           if (mounted) {
+  //             ScaffoldMessenger.of(context).showSnackBar(
+  //               const SnackBar(
+  //                 content: Text('インスタグラムが開きました。シェア内容をクリップボードにコピーしました。'),
+  //                 duration: Duration(seconds: 3),
+  //               ),
+  //             );
+  //           }
+  //         } else {
+  //           shareUri = Uri.parse('https://www.instagram.com/');
+  //           await launchUrl(shareUri, mode: LaunchMode.externalApplication);
+  //           await Clipboard.setData(ClipboardData(text: '$shareText\n$appUrl'));
+  //           if (mounted) {
+  //             ScaffoldMessenger.of(context).showSnackBar(
+  //               const SnackBar(
+  //                 content: Text('インスタグラムのウェブ版が開きました。シェア内容をクリップボードにコピーしました。'),
+  //                 duration: Duration(seconds: 3),
+  //               ),
+  //             );
+  //           }
+  //         }
+  //         return;
+  //       } catch (e) {
+  //         await Clipboard.setData(ClipboardData(text: '$shareText\n$appUrl'));
+  //         if (mounted) {
+  //           ScaffoldMessenger.of(context).showSnackBar(
+  //             const SnackBar(
+  //               content: Text('シェア内容をクリップボードにコピーしました'),
+  //               duration: Duration(seconds: 2),
+  //             ),
+  //           );
+  //         }
+  //         return;
+  //       }
+  //     default:
+  //       return;
+  //   }
+
+  //   try {
+  //     if (await canLaunchUrl(shareUri)) {
+  //       await launchUrl(shareUri, mode: LaunchMode.externalApplication);
+  //     } else {
+  //       await Clipboard.setData(ClipboardData(text: '$shareText\n$appUrl'));
+  //       if (mounted) {
+  //         ScaffoldMessenger.of(context).showSnackBar(
+  //           const SnackBar(
+  //             content: Text('シェア内容をクリップボードにコピーしました'),
+  //             duration: Duration(seconds: 2),
+  //           ),
+  //         );
+  //       }
+  //     }
+  //   } catch (e) {
+  //     await Clipboard.setData(ClipboardData(text: '$shareText\n$appUrl'));
+  //     if (mounted) {
+  //       ScaffoldMessenger.of(context).showSnackBar(
+  //         const SnackBar(
+  //           content: Text('シェア内容をクリップボードにコピーしました'),
+  //           duration: Duration(seconds: 2),
+  //         ),
+  //       );
+  //     }
+  //   }
+  // }
+
+  // // SNSシェアダイアログを表示
+  // void _showShareDialog(BuildContext context) {
+  //   showModalBottomSheet(
+  //     context: context,
+  //     backgroundColor: Colors.transparent,
+  //     builder: (BuildContext context) {
+  //       return Container(
+  //         decoration: const BoxDecoration(
+  //           color: Colors.white,
+  //           borderRadius: BorderRadius.only(
+  //             topLeft: Radius.circular(20),
+  //             topRight: Radius.circular(20),
+  //           ),
+  //         ),
+  //         child: Column(
+  //           mainAxisSize: MainAxisSize.min,
+  //           children: [
+  //             Container(
+  //               margin: const EdgeInsets.symmetric(vertical: 12),
+  //               width: 40,
+  //               height: 4,
+  //               decoration: BoxDecoration(
+  //                 color: Colors.grey[300],
+  //                 borderRadius: BorderRadius.circular(2),
+  //               ),
+  //             ),
+              
+  //             Padding(
+  //               padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 8),
+  //               child: Row(
+  //                 children: [
+  //                   Icon(Icons.share, color: Colors.brown.shade700),
+  //                   const SizedBox(width: 8),
+  //                   const Text(
+  //                     'シェアする',
+  //                     style: TextStyle(
+  //                       fontSize: 18,
+  //                       fontWeight: FontWeight.bold,
+  //                     ),
+  //                   ),
+  //                 ],
+  //               ),
+  //             ),
+              
+  //             Padding(
+  //               padding: const EdgeInsets.all(20),
+  //               child: Column(
+  //                 children: [
+  //                   Row(
+  //                     mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+  //                     children: [
+  //                       _buildShareOption(
+  //                         icon: FontAwesomeIcons.xTwitter,
+  //                         label: 'X',
+  //                         color: Colors.black,
+  //                         onTap: () {
+  //                           Navigator.pop(context);
+  //                           _shareToSNS('x');
+  //                         },
+  //                       ),
+  //                       _buildShareOption(
+  //                         icon: FontAwesomeIcons.facebookF,
+  //                         label: 'Facebook',
+  //                         color: const Color(0xFF4267B2),
+  //                         onTap: () {
+  //                           Navigator.pop(context);
+  //                           _shareToSNS('facebook');
+  //                         },
+  //                       ),
+  //                       _buildShareOption(
+  //                         icon: FontAwesomeIcons.line,
+  //                         label: 'LINE',
+  //                         color: const Color(0xFF00B900),
+  //                         onTap: () {
+  //                           Navigator.pop(context);
+  //                           _shareToSNS('line');
+  //                         },
+  //                       ),
+  //                     ],
+  //                   ),
+                    
+  //                   const SizedBox(height: 16),
+                    
+  //                   Row(
+  //                     mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+  //                     children: [
+  //                       _buildShareOption(
+  //                         icon: FontAwesomeIcons.instagram,
+  //                         label: 'Instagram',
+  //                         color: const Color(0xFFE4405F),
+  //                         onTap: () {
+  //                           Navigator.pop(context);
+  //                           _shareToSNS('instagram');
+  //                         },
+  //                       ),
+  //                       _buildShareOption(
+  //                         icon: FontAwesomeIcons.copy,
+  //                         label: 'コピー',
+  //                         color: Colors.grey.shade600,
+  //                         onTap: () async {
+  //                           Navigator.pop(context);
+                            
+  //                           String shareText = '';
+  //                           String? locationText = _getDisplayAddress();
+  //                           String riskLevel = _getDisplayMeshData() != null 
+  //                               ? getLevelText(_getDisplayMeshData()!.score) 
+  //                               : '安全';
+                            
+  //                           shareText = 'くまもりマップでクマ出没危険度をチェック！\n'
+  //                           '全国のクマ出没情報を地図で確認できます。\n\n'
+  //                           '安全な外出のためにぜひご活用ください。\n'
+  //                           'https://kumamori-map.netlify.app/\n\n'
+  //                           '#くまもりマップ #クマ出没 #登山 #ハイキング #キャンプ #アウトドア #トレッキング #紅葉 #山菜取り';
+                            
+  //                           await Clipboard.setData(ClipboardData(text: shareText));
+  //                           if (mounted) {
+  //                             ScaffoldMessenger.of(context).showSnackBar(
+  //                               const SnackBar(
+  //                                 content: Text('クリップボードにコピーしました'),
+  //                                 duration: Duration(seconds: 2),
+  //                               ),
+  //                             );
+  //                           }
+  //                         },
+  //                       ),
+  //                       const SizedBox(width: 64),
+  //                     ],
+  //                   ),
+  //                 ],
+  //               ),
+  //             ),
+  //             const SizedBox(height: 20),
+  //           ],
+  //         ),
+  //       );
+  //     },
+  //   );
+  // }
 
   Widget _buildShareOption({
     required IconData icon,
@@ -631,7 +791,6 @@ class _BearMapPageState extends State<BearMapPage> {
       final lines = csvString.split('\n').where((line) => line.trim().isNotEmpty).toList();
       
       List<MeshData> tempList = [];
-      Map<String, MeshData> meshMap = {};
       
       int startIndex = 0;
       if (lines.isNotEmpty) {
@@ -656,47 +815,24 @@ class _BearMapPageState extends State<BearMapPage> {
           
           double score = calculateScore(second, sixth, latest, latestSingle);
           
-          if (score > 0) {
-            final latLng = meshCodeToLatLng(meshCode);
-            if (latLng != null) {
-              final meshData = MeshData(
-                meshCode: meshCode,
-                latLng: latLng,
-                score: score,
-                originalScore: score,
-                second: second,
-                sixth: sixth,
-                latest: latest,
-                latestSingle: latestSingle,
-              );
-              tempList.add(meshData);
-              meshMap[meshCode] = meshData;
-            }
+          final latLng = meshCodeToLatLng(meshCode);
+          if (latLng != null) {
+            final meshData = MeshData(
+              meshCode: meshCode,
+              latLng: latLng,
+              score: score,
+              originalScore: score,
+              second: second,
+              sixth: sixth,
+              latest: latest,
+              latestSingle: latestSingle,
+            );
+            tempList.add(meshData);
           }
         }
       }
       
-      for (var meshData in tempList) {
-        final neighbors = getNeighborMeshCodes(meshData.meshCode);
-        double neighborSum = 0;
-        int neighborCount = 0;
-        
-        for (var neighborCode in neighbors) {
-          if (meshMap.containsKey(neighborCode)) {
-            neighborSum += meshMap[neighborCode]!.originalScore;
-            neighborCount++;
-          }
-        }
-        
-        if (neighborCount > 0) {
-          double neighborAverage = neighborSum / neighborCount;
-          meshData.score = meshData.originalScore * 0.6 + neighborAverage * 0.4;
-          
-          if (neighborCount >= 6 && neighborAverage > 3.0 && meshData.originalScore <= 0.5) {
-            meshData.score = math.max(meshData.score, 1.6);
-          }
-        }
-      }
+      // 隣接セル処理を削除 - この部分を丸ごと削除
       
       setState(() {
         meshDataList = tempList;
@@ -714,56 +850,7 @@ class _BearMapPageState extends State<BearMapPage> {
     }
   }
 
-  List<String> getNeighborMeshCodes(String meshCode) {
-    if (meshCode.length < 8) return [];
-    
-    List<String> neighbors = [];
-    
-    final firstMesh = meshCode.substring(0, 4);
-    final secondLat = int.parse(meshCode.substring(4, 5));
-    final secondLng = int.parse(meshCode.substring(5, 6));
-    final thirdCode = int.parse(meshCode.substring(6, 8));
-    final thirdLat = thirdCode ~/ 10;
-    final thirdLng = thirdCode % 10;
-    
-    for (int dLat = -1; dLat <= 1; dLat++) {
-      for (int dLng = -1; dLng <= 1; dLng++) {
-        if (dLat == 0 && dLng == 0) continue;
-        
-        int newThirdLat = thirdLat + dLat;
-        int newThirdLng = thirdLng + dLng;
-        int newSecondLat = secondLat;
-        int newSecondLng = secondLng;
-        
-        if (newThirdLat < 0) {
-          newThirdLat = 1;
-          newSecondLat--;
-        } else if (newThirdLat > 1) {
-          newThirdLat = 0;
-          newSecondLat++;
-        }
-        
-        if (newThirdLng < 0) {
-          newThirdLng = 1;
-          newSecondLng--;
-        } else if (newThirdLng > 1) {
-          newThirdLng = 0;
-          newSecondLng++;
-        }
-        
-        if (newSecondLat >= 0 && newSecondLat <= 7 && 
-            newSecondLng >= 0 && newSecondLng <= 7) {
-          String neighborCode = firstMesh + 
-              newSecondLat.toString() + 
-              newSecondLng.toString() + 
-              (newThirdLat * 10 + newThirdLng).toString().padLeft(2, '0');
-          neighbors.add(neighborCode);
-        }
-      }
-    }
-    
-    return neighbors;
-  }
+  // getNeighborMeshCodes関数を削除 - 使用されなくなるため
 
   double calculateScore(int second, int sixth, int latest, int latestSingle) {
     double score = latest * 3.0 + sixth * 1.5 + second * 0.5;
@@ -1018,28 +1105,6 @@ class _BearMapPageState extends State<BearMapPage> {
                     height: 1.5,
                   ),
                 ),
-                // const SizedBox(height: 16),
-                // Text(
-                //   '連携メリット',
-                //   style: TextStyle(
-                //     fontSize: 16,
-                //     fontWeight: FontWeight.bold,
-                //     color: Colors.blue.shade800,
-                //   ),
-                // ),
-                // const SizedBox(height: 8),
-                // Text(
-                //   '• クマ出没情報管理システムのご提供\n'
-                //   '• リアルタイムでの出没情報更新\n'
-                //   '• より細かい地域単位での危険度表示\n'
-                //   '• 住民・観光客への効果的な注意喚起\n'
-                //   '• 地域に特化したカスタマイズ',
-                //   style: TextStyle(
-                //     fontSize: 14,
-                //     color: Colors.grey.shade700,
-                //     height: 1.5,
-                //   ),
-                // ),
                 const SizedBox(height: 16),
                 Text(
                   'お問い合わせ',
@@ -1157,9 +1222,6 @@ class _BearMapPageState extends State<BearMapPage> {
                     ),
                     PolygonLayer(
                       polygons: meshDataList
-                          .where((data) {
-                            return data.score > 0;
-                          })
                           .map((data) {
                             final center = data.latLng;
                             final halfLat = 2.5 / 60.0 / 2.0;
@@ -1640,7 +1702,7 @@ class _BearMapPageState extends State<BearMapPage> {
                                               borderRadius: BorderRadius.circular(20),
                                             ),
                                             child: Icon(
-                                              FontAwesomeIcons.gear,  // Icons.settingsからFontAwesome.gearに変更
+                                              FontAwesomeIcons.gear,
                                               size: 18,
                                               color: isSettingsPanelOpen 
                                                   ? Colors.brown.shade700 
@@ -1665,7 +1727,6 @@ class _BearMapPageState extends State<BearMapPage> {
                                       child: Column(
                                         crossAxisAlignment: CrossAxisAlignment.start,
                                         children: [
-                                          // 地図スタイル設定
                                           Row(
                                             children: [
                                               Icon(Icons.map, size: 18, color: Colors.brown.shade700),
@@ -1735,7 +1796,6 @@ class _BearMapPageState extends State<BearMapPage> {
                                           
                                           const SizedBox(height: 20),
                                           
-                                          // ヒートマップ設定
                                           Row(
                                             children: [
                                               Icon(Icons.opacity, size: 18, color: Colors.brown.shade700),
@@ -1920,9 +1980,7 @@ class _BearMapPageState extends State<BearMapPage> {
                                           },
                                         ),
                                         const SizedBox(height: 10),
-                                        // クマ危険度インジケーターの表示部分を修正
-                                        // main.dartの該当箇所（約1100行目付近）を以下のように変更
-
+                                        
                                         if (_getDisplayMeshData() != null) ...[
                                           Center(
                                             child: Column(
@@ -1933,7 +1991,7 @@ class _BearMapPageState extends State<BearMapPage> {
                                                     fontSize: 20,
                                                     fontWeight: FontWeight.bold,
                                                     color: _getDisplayMeshData()!.score == 0
-                                                        ? Colors.cyan  // 安全レベルの場合は水色
+                                                        ? Colors.cyan
                                                         : _getDisplayMeshData()!.score < 2.0
                                                             ? Colors.green
                                                             : _getDisplayMeshData()!.score < 4.0
@@ -1969,7 +2027,6 @@ class _BearMapPageState extends State<BearMapPage> {
                                             ),
                                           ),
                                         ] else ...[
-                                          // データがない場合の表示
                                           Center(
                                             child: Column(
                                               children: [
@@ -1978,7 +2035,7 @@ class _BearMapPageState extends State<BearMapPage> {
                                                   style: TextStyle(
                                                     fontSize: 20,
                                                     fontWeight: FontWeight.bold,
-                                                    color: Colors.cyan,  // 安全レベルと同じ水色
+                                                    color: Colors.cyan,
                                                   ),
                                                 ),
                                                 const SizedBox(height: 4),
@@ -1999,101 +2056,105 @@ class _BearMapPageState extends State<BearMapPage> {
                                             ),
                                           ),
                                         ],
-                                        
-                                        // if (_getDisplayMeshData() != null) ...[
-                                        //   Center(
-                                        //     child: Column(
-                                        //       children: [
-                                        //         Text(
-                                        //           getLevelText(_getDisplayMeshData()!.score),
-                                        //           style: TextStyle(
-                                        //             fontSize: 20,
-                                        //             fontWeight: FontWeight.bold,
-                                        //             color: _getDisplayMeshData()!.score == 0
-                                        //                 ? Colors.cyan
-                                        //                 : _getDisplayMeshData()!.score < 2.0
-                                        //                     ? Colors.green
-                                        //                     : _getDisplayMeshData()!.score < 4.0
-                                        //                         ? Colors.yellow.shade700
-                                        //                         : _getDisplayMeshData()!.score < 5.0
-                                        //                             ? Colors.orange
-                                        //                             : Colors.red,
-                                        //           ),
-                                        //         ),
-                                        //         const SizedBox(height: 4),
-                                        //         Text(
-                                        //           'スコア: ${_getDisplayMeshData()!.score.toStringAsFixed(2)}',
-                                        //           style: const TextStyle(
-                                        //             fontSize: 12,
-                                        //             color: Colors.grey,
-                                        //           ),
-                                        //         ),
-                                        //         const SizedBox(height: 4),
-                                        //         Text(
-                                        //           _getDisplayMeshData()!.score == 0
-                                        //               ? 'クマ出没の報告がない地域です'
-                                        //               : _getDisplayMeshData()!.score < 2.0
-                                        //                   ? 'クマ出没の報告は少ない地域です'
-                                        //                   : _getDisplayMeshData()!.score < 4.0
-                                        //                       ? 'クマ出没の報告がある地域です'
-                                        //                       : _getDisplayMeshData()!.score < 5.0
-                                        //                           ? '最近、クマ出没の報告がある地域です'
-                                        //                           : '最近、クマ出没の報告が多い地域です',
-                                        //           style: const TextStyle(fontSize: 14, color: Colors.grey),
-                                        //           textAlign: TextAlign.center,
-                                        //         ),
-                                        //       ],
-                                        //     ),
-                                        //   ),
-                                        // ] else ...[
-                                        //   const Center(
-                                        //     child: Text(
-                                        //       'クマ出没の報告がない地域です',
-                                        //       style: TextStyle(fontSize: 14, color: Colors.grey),
-                                        //     ),
-                                        //   ),
-                                        // ],
                                       ],
                                     ),
                                   ),
                                   
                                   const SizedBox(height: 16),
-                                  
+
                                   Row(
                                     children: [
                                       Expanded(
-                                        child: OutlinedButton.icon(
+                                        child: OutlinedButton(
                                           onPressed: () => _showUsageDialog(context),
-                                          icon: Icon(Icons.info_outline, size: 18),
-                                          label: Text('ご利用にあたって'),
                                           style: OutlinedButton.styleFrom(
                                             padding: EdgeInsets.symmetric(vertical: 12),
                                             side: BorderSide(color: Colors.brown.shade300),
                                             foregroundColor: Colors.brown.shade700,
                                           ),
+                                          child: Text('ご利用にあたって'),
                                         ),
                                       ),
                                       const SizedBox(width: 12),
                                       Expanded(
-                                        child: OutlinedButton.icon(
+                                        child: OutlinedButton(
                                           onPressed: () => _showMunicipalDialog(context),
-                                          icon: Icon(Icons.business, size: 18),
-                                          label: Text('自治体の皆様へ'),
                                           style: OutlinedButton.styleFrom(
                                             padding: EdgeInsets.symmetric(vertical: 12),
                                             side: BorderSide(color: Colors.blue.shade300),
                                             foregroundColor: Colors.blue.shade700,
                                           ),
+                                          child: Text('自治体の皆様へ'),
                                         ),
                                       ),
                                     ],
                                   ),
 
+                                  // Row(
+                                  //   children: [
+                                  //     Expanded(
+                                  //       child: OutlinedButton.icon(
+                                  //         onPressed: () => _showUsageDialog(context),
+                                  //         icon: Icon(FontAwesomeIcons.circleInfo, size: 18),  // Material Icons.info_outline → FontAwesome
+                                  //         label: Text('ご利用にあたって'),
+                                  //         style: OutlinedButton.styleFrom(
+                                  //           padding: EdgeInsets.symmetric(vertical: 12),
+                                  //           side: BorderSide(color: Colors.brown.shade300),
+                                  //           foregroundColor: Colors.brown.shade700,
+                                  //         ),
+                                  //       ),
+                                  //     ),
+                                  //     const SizedBox(width: 12),
+                                  //     Expanded(
+                                  //       child: OutlinedButton.icon(
+                                  //         onPressed: () => _showMunicipalDialog(context),
+                                  //         icon: Icon(FontAwesomeIcons.building, size: 18),  // Material Icons.business → FontAwesome
+                                  //         label: Text('自治体の皆様へ'),
+                                  //         style: OutlinedButton.styleFrom(
+                                  //           padding: EdgeInsets.symmetric(vertical: 12),
+                                  //           side: BorderSide(color: Colors.blue.shade300),
+                                  //           foregroundColor: Colors.blue.shade700,
+                                  //         ),
+                                  //       ),
+                                  //     ),
+                                  //   ],
+                                  // ),
+                                  
+                                  // Row(
+                                  //   children: [
+                                  //     Expanded(
+                                  //       child: OutlinedButton.icon(
+                                  //         onPressed: () => _showUsageDialog(context),
+                                  //         icon: Icon(Icons.info_outline, size: 18),
+                                  //         label: Text('ご利用にあたって'),
+                                  //         style: OutlinedButton.styleFrom(
+                                  //           padding: EdgeInsets.symmetric(vertical: 12),
+                                  //           side: BorderSide(color: Colors.brown.shade300),
+                                  //           foregroundColor: Colors.brown.shade700,
+                                  //         ),
+                                  //       ),
+                                  //     ),
+                                  //     const SizedBox(width: 12),
+                                  //     Expanded(
+                                  //       child: OutlinedButton.icon(
+                                  //         onPressed: () => _showMunicipalDialog(context),
+                                  //         icon: Icon(Icons.business, size: 18),
+                                  //         label: Text('自治体の皆様へ'),
+                                  //         style: OutlinedButton.styleFrom(
+                                  //           padding: EdgeInsets.symmetric(vertical: 12),
+                                  //           side: BorderSide(color: Colors.blue.shade300),
+                                  //           foregroundColor: Colors.blue.shade700,
+                                  //         ),
+                                  //       ),
+                                  //     ),
+                                  //   ],
+                                  // ),
+
                                   const SizedBox(height: 20),
                                 ],
                               ),
                             ),
-                             // コピーライト追加
+                            
                             Container(
                               padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
                               decoration: BoxDecoration(
