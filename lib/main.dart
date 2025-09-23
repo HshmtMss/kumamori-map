@@ -104,455 +104,62 @@ class _BearMapPageState extends State<BearMapPage> {
     super.dispose();
   }
 
-  // SNSシェア機能
-  // SNSシェア機能 - Instagram削除版
-  Future<void> _shareToSNS(String platform) async {
-    String shareText = 'くまもりマップでクマ出没危険度をチェック！\n'
-      '全国のクマ出没情報を地図で確認できます。\n\n'
-      '安全な外出のためにぜひご活用ください。\n'
-      '#くまもりマップ #クマ出没 #登山 #ハイキング #キャンプ #アウトドア #トレッキング #紅葉 #山菜取り';
-
-    String appUrl = 'https://kumamori-map.netlify.app/';
-    String encodedText = Uri.encodeComponent(shareText);
-    String encodedUrl = Uri.encodeComponent(appUrl);
+  // コピー機能
+  Future<void> _copyLocationInfo() async {
+    String shareText = '';
+    String? locationText = _getDisplayAddress();
+    MeshData? meshData = _getDisplayMeshData();
+    String riskLevel = meshData != null ? getLevelText(meshData.score) : '安全';
+    String score = meshData != null ? meshData.score.toStringAsFixed(2) : '0.00';
+    String comment = '';
     
-    Uri? shareUri;
-    
-    switch (platform) {
-      case 'x':
-        shareUri = Uri.parse('https://twitter.com/intent/tweet?text=$encodedText&url=$encodedUrl');
-        break;
-      case 'facebook':
-        shareUri = Uri.parse('https://www.facebook.com/sharer/sharer.php?u=$encodedUrl&quote=$encodedText');
-        break;
-      case 'line':
-        shareUri = Uri.parse('https://social-plugins.line.me/lineit/share?url=$encodedUrl&text=$encodedText');
-        break;
-      default:
-        return;
-    }
-
-    try {
-      if (await canLaunchUrl(shareUri)) {
-        await launchUrl(shareUri, mode: LaunchMode.externalApplication);
+    // 危険度に応じたコメントを生成
+    if (meshData != null) {
+      if (meshData.score == 0) {
+        comment = 'クマの出没報告がない地域です。';
+      } else if (meshData.score < 2.0) {
+        comment = 'クマの出没報告は少ない地域ですが、山に入る際は基本的な注意を心がけましょう。';
+      } else if (meshData.score < 4.0) {
+        comment = '定期的にクマの出没報告がある地域です。山に入る際は十分に注意しましょう。';
+      } else if (meshData.score < 5.0) {
+        comment = '最近クマの出没報告がある地域です。山に入る際は十分に注意しましょう。';
       } else {
-        await Clipboard.setData(ClipboardData(text: '$shareText\n$appUrl'));
-        if (mounted) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(
-              content: Text('シェア内容をクリップボードにコピーしました'),
-              duration: Duration(seconds: 2),
-            ),
-          );
-        }
+        comment = '頻繁にクマの出没報告がある地域です。山や市街地との境界部でも十分な注意が必要です。';
       }
-    } catch (e) {
-      await Clipboard.setData(ClipboardData(text: '$shareText\n$appUrl'));
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('シェア内容をクリップボードにコピーしました'),
-            duration: Duration(seconds: 2),
-          ),
-        );
-      }
+    } else {
+      comment = 'クマ出没の報告がない地域です';
     }
-  }
-
-  // SNSシェアダイアログを表示 - Instagram削除版
-  void _showShareDialog(BuildContext context) {
-    showModalBottomSheet(
-      context: context,
-      backgroundColor: Colors.transparent,
-      builder: (BuildContext context) {
-        return Container(
-          decoration: const BoxDecoration(
-            color: Colors.white,
-            borderRadius: BorderRadius.only(
-              topLeft: Radius.circular(20),
-              topRight: Radius.circular(20),
-            ),
-          ),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Container(
-                margin: const EdgeInsets.symmetric(vertical: 12),
-                width: 40,
-                height: 4,
-                decoration: BoxDecoration(
-                  color: Colors.grey[300],
-                  borderRadius: BorderRadius.circular(2),
-                ),
-              ),
-              
-              Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 8),
-                child: Row(
-                  children: [
-                    Icon(Icons.share, color: Colors.brown.shade700),
-                    const SizedBox(width: 8),
-                    const Text(
-                      'シェアする',
-                      style: TextStyle(
-                        fontSize: 18,
-                        fontWeight: FontWeight.bold,
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-              
-              Padding(
-                padding: const EdgeInsets.all(20),
-                child: Column(
-                  children: [
-                    Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                      children: [
-                        _buildShareOption(
-                          icon: FontAwesomeIcons.xTwitter,
-                          label: 'X',
-                          color: Colors.black,
-                          onTap: () {
-                            Navigator.pop(context);
-                            _shareToSNS('x');
-                          },
-                        ),
-                        _buildShareOption(
-                          icon: FontAwesomeIcons.facebookF,
-                          label: 'Facebook',
-                          color: const Color(0xFF4267B2),
-                          onTap: () {
-                            Navigator.pop(context);
-                            _shareToSNS('facebook');
-                          },
-                        ),
-                        _buildShareOption(
-                          icon: FontAwesomeIcons.line,
-                          label: 'LINE',
-                          color: const Color(0xFF00B900),
-                          onTap: () {
-                            Navigator.pop(context);
-                            _shareToSNS('line');
-                          },
-                        ),
-                      ],
-                    ),
-                    
-                    const SizedBox(height: 16),
-                    
-                    Row(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: [
-                        _buildShareOption(
-                          icon: FontAwesomeIcons.copy,
-                          label: 'コピー',
-                          color: Colors.grey.shade600,
-                          onTap: () async {
-                            Navigator.pop(context);
-                            
-                            String shareText = '';
-                            String? locationText = _getDisplayAddress();
-                            String riskLevel = _getDisplayMeshData() != null 
-                                ? getLevelText(_getDisplayMeshData()!.score) 
-                                : '安全';
-                            
-                            shareText = 'くまもりマップでクマ出没危険度をチェック！\n'
-                            '全国のクマ出没情報を地図で確認できます。\n\n'
-                            '安全な外出のためにぜひご活用ください。\n'
-                            'https://kumamori-map.netlify.app/\n\n'
-                            '#くまもりマップ #クマ出没 #登山 #ハイキング #キャンプ #アウトドア #トレッキング #紅葉 #山菜取り';
-                            
-                            await Clipboard.setData(ClipboardData(text: shareText));
-                            if (mounted) {
-                              ScaffoldMessenger.of(context).showSnackBar(
-                                const SnackBar(
-                                  content: Text('クリップボードにコピーしました'),
-                                  duration: Duration(seconds: 2),
-                                ),
-                              );
-                            }
-                          },
-                        ),
-                      ],
-                    ),
-                  ],
-                ),
-              ),
-              const SizedBox(height: 20),
-            ],
-          ),
-        );
-      },
-    );
-  }
-  // Future<void> _shareToSNS(String platform) async {
-  //   String shareText = 'くまもりマップでクマ出没危険度をチェック！\n'
-  //     '全国のクマ出没情報を地図で確認できます。\n\n'
-  //     '安全な外出のためにぜひご活用ください。\n'
-  //     '#くまもりマップ #クマ出没 #登山 #ハイキング #キャンプ #アウトドア #トレッキング #紅葉 #山菜取り';
-
-  //   String appUrl = 'https://kumamori-map.netlify.app/';
-  //   String encodedText = Uri.encodeComponent(shareText);
-  //   String encodedUrl = Uri.encodeComponent(appUrl);
     
-  //   Uri? shareUri;
+    // 位置情報のタイプを判定
+    String locationType = '';
+    if (activeInfoType == InfoType.currentLocation) {
+      locationType = '【現在地】';
+    } else if (activeInfoType == InfoType.search) {
+      locationType = '【検索地点】';
+    } else {
+      locationType = '【選択地点】';
+    }
     
-  //   switch (platform) {
-  //     case 'x':
-  //       shareUri = Uri.parse('https://twitter.com/intent/tweet?text=$encodedText&url=$encodedUrl');
-  //       break;
-  //     case 'facebook':
-  //       shareUri = Uri.parse('https://www.facebook.com/sharer/sharer.php?u=$encodedUrl&quote=$encodedText');
-  //       break;
-  //     case 'line':
-  //       shareUri = Uri.parse('https://social-plugins.line.me/lineit/share?url=$encodedUrl&text=$encodedText');
-  //       break;
-  //     case 'instagram':
-  //       try {
-  //         shareUri = Uri.parse('instagram://');
-  //         if (await canLaunchUrl(shareUri)) {
-  //           await launchUrl(shareUri, mode: LaunchMode.externalApplication);
-  //           await Clipboard.setData(ClipboardData(text: '$shareText\n$appUrl'));
-  //           if (mounted) {
-  //             ScaffoldMessenger.of(context).showSnackBar(
-  //               const SnackBar(
-  //                 content: Text('インスタグラムが開きました。シェア内容をクリップボードにコピーしました。'),
-  //                 duration: Duration(seconds: 3),
-  //               ),
-  //             );
-  //           }
-  //         } else {
-  //           shareUri = Uri.parse('https://www.instagram.com/');
-  //           await launchUrl(shareUri, mode: LaunchMode.externalApplication);
-  //           await Clipboard.setData(ClipboardData(text: '$shareText\n$appUrl'));
-  //           if (mounted) {
-  //             ScaffoldMessenger.of(context).showSnackBar(
-  //               const SnackBar(
-  //                 content: Text('インスタグラムのウェブ版が開きました。シェア内容をクリップボードにコピーしました。'),
-  //                 duration: Duration(seconds: 3),
-  //               ),
-  //             );
-  //           }
-  //         }
-  //         return;
-  //       } catch (e) {
-  //         await Clipboard.setData(ClipboardData(text: '$shareText\n$appUrl'));
-  //         if (mounted) {
-  //           ScaffoldMessenger.of(context).showSnackBar(
-  //             const SnackBar(
-  //               content: Text('シェア内容をクリップボードにコピーしました'),
-  //               duration: Duration(seconds: 2),
-  //             ),
-  //           );
-  //         }
-  //         return;
-  //       }
-  //     default:
-  //       return;
-  //   }
-
-  //   try {
-  //     if (await canLaunchUrl(shareUri)) {
-  //       await launchUrl(shareUri, mode: LaunchMode.externalApplication);
-  //     } else {
-  //       await Clipboard.setData(ClipboardData(text: '$shareText\n$appUrl'));
-  //       if (mounted) {
-  //         ScaffoldMessenger.of(context).showSnackBar(
-  //           const SnackBar(
-  //             content: Text('シェア内容をクリップボードにコピーしました'),
-  //             duration: Duration(seconds: 2),
-  //           ),
-  //         );
-  //       }
-  //     }
-  //   } catch (e) {
-  //     await Clipboard.setData(ClipboardData(text: '$shareText\n$appUrl'));
-  //     if (mounted) {
-  //       ScaffoldMessenger.of(context).showSnackBar(
-  //         const SnackBar(
-  //           content: Text('シェア内容をクリップボードにコピーしました'),
-  //           duration: Duration(seconds: 2),
-  //         ),
-  //       );
-  //     }
-  //   }
-  // }
-
-  // // SNSシェアダイアログを表示
-  // void _showShareDialog(BuildContext context) {
-  //   showModalBottomSheet(
-  //     context: context,
-  //     backgroundColor: Colors.transparent,
-  //     builder: (BuildContext context) {
-  //       return Container(
-  //         decoration: const BoxDecoration(
-  //           color: Colors.white,
-  //           borderRadius: BorderRadius.only(
-  //             topLeft: Radius.circular(20),
-  //             topRight: Radius.circular(20),
-  //           ),
-  //         ),
-  //         child: Column(
-  //           mainAxisSize: MainAxisSize.min,
-  //           children: [
-  //             Container(
-  //               margin: const EdgeInsets.symmetric(vertical: 12),
-  //               width: 40,
-  //               height: 4,
-  //               decoration: BoxDecoration(
-  //                 color: Colors.grey[300],
-  //                 borderRadius: BorderRadius.circular(2),
-  //               ),
-  //             ),
-              
-  //             Padding(
-  //               padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 8),
-  //               child: Row(
-  //                 children: [
-  //                   Icon(Icons.share, color: Colors.brown.shade700),
-  //                   const SizedBox(width: 8),
-  //                   const Text(
-  //                     'シェアする',
-  //                     style: TextStyle(
-  //                       fontSize: 18,
-  //                       fontWeight: FontWeight.bold,
-  //                     ),
-  //                   ),
-  //                 ],
-  //               ),
-  //             ),
-              
-  //             Padding(
-  //               padding: const EdgeInsets.all(20),
-  //               child: Column(
-  //                 children: [
-  //                   Row(
-  //                     mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-  //                     children: [
-  //                       _buildShareOption(
-  //                         icon: FontAwesomeIcons.xTwitter,
-  //                         label: 'X',
-  //                         color: Colors.black,
-  //                         onTap: () {
-  //                           Navigator.pop(context);
-  //                           _shareToSNS('x');
-  //                         },
-  //                       ),
-  //                       _buildShareOption(
-  //                         icon: FontAwesomeIcons.facebookF,
-  //                         label: 'Facebook',
-  //                         color: const Color(0xFF4267B2),
-  //                         onTap: () {
-  //                           Navigator.pop(context);
-  //                           _shareToSNS('facebook');
-  //                         },
-  //                       ),
-  //                       _buildShareOption(
-  //                         icon: FontAwesomeIcons.line,
-  //                         label: 'LINE',
-  //                         color: const Color(0xFF00B900),
-  //                         onTap: () {
-  //                           Navigator.pop(context);
-  //                           _shareToSNS('line');
-  //                         },
-  //                       ),
-  //                     ],
-  //                   ),
-                    
-  //                   const SizedBox(height: 16),
-                    
-  //                   Row(
-  //                     mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-  //                     children: [
-  //                       _buildShareOption(
-  //                         icon: FontAwesomeIcons.instagram,
-  //                         label: 'Instagram',
-  //                         color: const Color(0xFFE4405F),
-  //                         onTap: () {
-  //                           Navigator.pop(context);
-  //                           _shareToSNS('instagram');
-  //                         },
-  //                       ),
-  //                       _buildShareOption(
-  //                         icon: FontAwesomeIcons.copy,
-  //                         label: 'コピー',
-  //                         color: Colors.grey.shade600,
-  //                         onTap: () async {
-  //                           Navigator.pop(context);
-                            
-  //                           String shareText = '';
-  //                           String? locationText = _getDisplayAddress();
-  //                           String riskLevel = _getDisplayMeshData() != null 
-  //                               ? getLevelText(_getDisplayMeshData()!.score) 
-  //                               : '安全';
-                            
-  //                           shareText = 'くまもりマップでクマ出没危険度をチェック！\n'
-  //                           '全国のクマ出没情報を地図で確認できます。\n\n'
-  //                           '安全な外出のためにぜひご活用ください。\n'
-  //                           'https://kumamori-map.netlify.app/\n\n'
-  //                           '#くまもりマップ #クマ出没 #登山 #ハイキング #キャンプ #アウトドア #トレッキング #紅葉 #山菜取り';
-                            
-  //                           await Clipboard.setData(ClipboardData(text: shareText));
-  //                           if (mounted) {
-  //                             ScaffoldMessenger.of(context).showSnackBar(
-  //                               const SnackBar(
-  //                                 content: Text('クリップボードにコピーしました'),
-  //                                 duration: Duration(seconds: 2),
-  //                               ),
-  //                             );
-  //                           }
-  //                         },
-  //                       ),
-  //                       const SizedBox(width: 64),
-  //                     ],
-  //                   ),
-  //                 ],
-  //               ),
-  //             ),
-  //             const SizedBox(height: 20),
-  //           ],
-  //         ),
-  //       );
-  //     },
-  //   );
-  // }
-
-  Widget _buildShareOption({
-    required IconData icon,
-    required String label,
-    required Color color,
-    required VoidCallback onTap,
-  }) {
-    return GestureDetector(
-      onTap: onTap,
-      child: Column(
-        children: [
-          Container(
-            width: 56,
-            height: 56,
-            decoration: BoxDecoration(
-              color: color,
-              shape: BoxShape.circle,
-            ),
-            child: Icon(
-              icon,
-              color: Colors.white,
-              size: 28,
-            ),
-          ),
-          const SizedBox(height: 8),
-          Text(
-            label,
-            style: const TextStyle(
-              fontSize: 12,
-              fontWeight: FontWeight.w500,
-            ),
-          ),
-        ],
-      ),
-    );
+    shareText = '$locationType\n'
+        '場所: ${locationText ?? '不明'}\n'
+        '危険度: $riskLevel\n'
+        'スコア: $score\n'
+        'コメント: $comment\n\n'
+        'くまもりマップでクマ出没危険度をチェック！\n'
+        '全国のクマ出没情報を地図で確認できます。\n\n'
+        '安全な外出のためにぜひご活用ください。\n'
+        'https://kumamori-map.netlify.app/\n\n'
+        '#くまもりマップ #クマ出没 #登山 #ハイキング #キャンプ #アウトドア #トレッキング #紅葉 #山菜採り';
+    
+    await Clipboard.setData(ClipboardData(text: shareText));
+    if (mounted) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('位置情報をクリップボードにコピーしました'),
+          duration: Duration(seconds: 2),
+        ),
+      );
+    }
   }
 
   Future<String?> reverseGeocode(double lat, double lon) async {
@@ -832,8 +439,6 @@ class _BearMapPageState extends State<BearMapPage> {
         }
       }
       
-      // 隣接セル処理を削除 - この部分を丸ごと削除
-      
       setState(() {
         meshDataList = tempList;
         isLoading = false;
@@ -849,8 +454,6 @@ class _BearMapPageState extends State<BearMapPage> {
       });
     }
   }
-
-  // getNeighborMeshCodes関数を削除 - 使用されなくなるため
 
   double calculateScore(int second, int sixth, int latest, int latestSingle) {
     double score = latest * 3.0 + sixth * 1.5 + second * 0.5;
@@ -1454,11 +1057,11 @@ class _BearMapPageState extends State<BearMapPage> {
                         ),
                         child: IconButton(
                           icon: const Icon(
-                            Icons.share,
+                            Icons.copy,
                             color: Colors.black87,
                             size: 24,
                           ),
-                          onPressed: () => _showShareDialog(context),
+                          onPressed: _copyLocationInfo,
                           padding: EdgeInsets.zero,
                         ),
                       ),
@@ -2090,66 +1693,6 @@ class _BearMapPageState extends State<BearMapPage> {
                                     ],
                                   ),
 
-                                  // Row(
-                                  //   children: [
-                                  //     Expanded(
-                                  //       child: OutlinedButton.icon(
-                                  //         onPressed: () => _showUsageDialog(context),
-                                  //         icon: Icon(FontAwesomeIcons.circleInfo, size: 18),  // Material Icons.info_outline → FontAwesome
-                                  //         label: Text('ご利用にあたって'),
-                                  //         style: OutlinedButton.styleFrom(
-                                  //           padding: EdgeInsets.symmetric(vertical: 12),
-                                  //           side: BorderSide(color: Colors.brown.shade300),
-                                  //           foregroundColor: Colors.brown.shade700,
-                                  //         ),
-                                  //       ),
-                                  //     ),
-                                  //     const SizedBox(width: 12),
-                                  //     Expanded(
-                                  //       child: OutlinedButton.icon(
-                                  //         onPressed: () => _showMunicipalDialog(context),
-                                  //         icon: Icon(FontAwesomeIcons.building, size: 18),  // Material Icons.business → FontAwesome
-                                  //         label: Text('自治体の皆様へ'),
-                                  //         style: OutlinedButton.styleFrom(
-                                  //           padding: EdgeInsets.symmetric(vertical: 12),
-                                  //           side: BorderSide(color: Colors.blue.shade300),
-                                  //           foregroundColor: Colors.blue.shade700,
-                                  //         ),
-                                  //       ),
-                                  //     ),
-                                  //   ],
-                                  // ),
-                                  
-                                  // Row(
-                                  //   children: [
-                                  //     Expanded(
-                                  //       child: OutlinedButton.icon(
-                                  //         onPressed: () => _showUsageDialog(context),
-                                  //         icon: Icon(Icons.info_outline, size: 18),
-                                  //         label: Text('ご利用にあたって'),
-                                  //         style: OutlinedButton.styleFrom(
-                                  //           padding: EdgeInsets.symmetric(vertical: 12),
-                                  //           side: BorderSide(color: Colors.brown.shade300),
-                                  //           foregroundColor: Colors.brown.shade700,
-                                  //         ),
-                                  //       ),
-                                  //     ),
-                                  //     const SizedBox(width: 12),
-                                  //     Expanded(
-                                  //       child: OutlinedButton.icon(
-                                  //         onPressed: () => _showMunicipalDialog(context),
-                                  //         icon: Icon(Icons.business, size: 18),
-                                  //         label: Text('自治体の皆様へ'),
-                                  //         style: OutlinedButton.styleFrom(
-                                  //           padding: EdgeInsets.symmetric(vertical: 12),
-                                  //           side: BorderSide(color: Colors.blue.shade300),
-                                  //           foregroundColor: Colors.blue.shade700,
-                                  //         ),
-                                  //       ),
-                                  //     ),
-                                  //   ],
-                                  // ),
-
                                   const SizedBox(height: 20),
                                 ],
                               ),
@@ -2185,10 +1728,10 @@ class _BearMapPageState extends State<BearMapPage> {
                                       fontWeight: FontWeight.w300,
                                     ),
                                     textAlign: TextAlign.center,
-                                   ),
-                                  ],
-                                ),
+                                  ),
+                                ],
                               ),
+                            ),
                           ],
                         ),
                       ),
@@ -2297,3 +1840,4 @@ class CustomPin {
     this.meshData,
   });
 }
+
