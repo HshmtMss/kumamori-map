@@ -88,7 +88,7 @@ class _BearMapPageState extends State<BearMapPage> {
   ];
   
   final DraggableScrollableController _draggableController = DraggableScrollableController();
-  final String lastUpdated = '2025年9月23日 12:47';
+  final String lastUpdated = '2025年9月23日 12:55';
   
   @override
   void initState() {
@@ -1056,13 +1056,14 @@ class _BearMapPageState extends State<BearMapPage> {
                           ],
                         ),
                         child: IconButton(
-                          icon: const Icon(
-                            Icons.copy,
-                            color: Colors.black87,
-                            size: 24,
+                          icon: Icon(
+                            FontAwesomeIcons.copy,
+                            color: Colors.grey.shade700,
+                            size: 20,
                           ),
                           onPressed: _copyLocationInfo,
                           padding: EdgeInsets.zero,
+                          tooltip: 'コピー',
                         ),
                       ),
                       
