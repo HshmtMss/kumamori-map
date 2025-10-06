@@ -10,6 +10,7 @@ import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'dart:convert';
 import 'dart:math' as math;
+import 'package:flutter/gestures.dart';
 
 void main() {
   runApp(const MyApp());
@@ -88,7 +89,7 @@ class _BearMapPageState extends State<BearMapPage> {
   ];
   
   final DraggableScrollableController _draggableController = DraggableScrollableController();
-  final String lastUpdated = '2025年9月30日 15:20';
+  final String lastUpdated = '2025年10月6日 12:00';
   
   @override
   void initState() {
@@ -698,9 +699,43 @@ class _BearMapPageState extends State<BearMapPage> {
                 ),
                 const SizedBox(height: 12),
                 Text(
-                  '熊の出没は、地域住民の安全や観光・農業に大きな影響を及ぼしています。'
+                  'クマの出没は、地域住民の安全や観光・農業に大きな影響を及ぼしています。'
                   '当サイト「くまもりマップ」では、最新の出没情報を集約し、わかりやすく危険度を表示しています。\n\n'
-                  '自治体の皆さまと協力し、住民や観光客の安心・安全に役立つ仕組みづくりを進めています。\n'
+                  '自治体の皆さまと協力し、住民や観光客の安心・安全に役立つ仕組みづくりを進めています。\n',
+                  style: TextStyle(
+                    fontSize: 14,
+                    color: Colors.grey.shade700,
+                    height: 1.5,
+                  ),
+                ),
+                RichText(
+                  text: TextSpan(
+                    style: TextStyle(
+                      fontSize: 14,
+                      color: Colors.grey.shade700,
+                      height: 1.5,
+                    ),
+                    children: [
+                      TextSpan(text: 'クマの出没情報管理システム『'),
+                      TextSpan(
+                        text: 'ワイルド・ウォッチ クマ警戒版',
+                        style: TextStyle(
+                          color: Colors.blue.shade600,
+                          decoration: TextDecoration.underline,
+                        ),
+                        recognizer: TapGestureRecognizer()
+                          ..onTap = () async {
+                            final Uri url = Uri.parse('https://www.research-coordinate.co.jp/wild-watch-bear');
+                            if (await canLaunchUrl(url)) {
+                              await launchUrl(url, mode: LaunchMode.externalApplication);
+                            }
+                          },
+                      ),
+                      TextSpan(text: '』を無料でご利用いただけます。\n'),
+                    ],
+                  ),
+                ),
+                Text(
                   'ご関心のある自治体様は、どうぞお気軽にご相談ください。',
                   style: TextStyle(
                     fontSize: 14,
