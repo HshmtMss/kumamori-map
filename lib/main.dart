@@ -89,7 +89,7 @@ class _BearMapPageState extends State<BearMapPage> {
   ];
   
   final DraggableScrollableController _draggableController = DraggableScrollableController();
-  final String lastUpdated = '2025年10月6日 12:00';
+  final String lastUpdated = '2025年10月21日 7:00';
   
   @override
   void initState() {

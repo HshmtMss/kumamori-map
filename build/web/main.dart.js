@@ -40977,7 +40977,7 @@ l=A.d4(g,A.fH(A.a([B.a4J,B.Nm,k,A.d4(g,A.bv("\ud83d\udc3b \u304f\u307e\u3082\u30
 n=A.am(B.c.aJ(229.5),B.l.u()>>>16&255,B.l.u()>>>8&255,B.l.u()&255)
 i=A.f2(8)
 j=A.a([new A.b6(0,B.F,A.am(13,B.m.u()>>>16&255,B.m.u()>>>8&255,B.m.u()&255),B.bP,4)],m)
-j=A.a([l,A.d4(B.ko,A.d4(g,A.fH(A.a([A.hx(B.Nj,B.fe,g,12),B.a4K,A.bv("\u66f4\u65b0: 2025\u5e7410\u67086\u65e5 12:00",g,g,g,A.bV(g,g,B.fe,g,g,g,g,g,g,g,g,11,g,g,B.t,g,g,!0,g,g,g,g,g,g,g,g),g,g)],o),B.aO,B.cU),B.x,g,new A.bX(n,g,g,i,j,g,B.a1),g,g,B.MI,g),B.x,g,g,g,B.Mo,g,g)],o)
+j=A.a([l,A.d4(B.ko,A.d4(g,A.fH(A.a([A.hx(B.Nj,B.fe,g,12),B.a4K,A.bv("\u66f4\u65b0: 2025\u5e7410\u670821\u65e5 7:00",g,g,g,A.bV(g,g,B.fe,g,g,g,g,g,g,g,g,11,g,g,B.t,g,g,!0,g,g,g,g,g,g,g,g),g,g)],o),B.aO,B.cU),B.x,g,new A.bX(n,g,g,i,j,g,B.a1),g,g,B.MI,g),B.x,g,g,g,B.Mo,g,g)],o)
 if(h.y.length!==0){n=A.f2(12)
 l=A.a([new A.b6(0,B.F,A.am(B.c.aJ(25.5),B.m.u()>>>16&255,B.m.u()>>>8&255,B.m.u()&255),B.c7,8)],m)
 k=h.y
