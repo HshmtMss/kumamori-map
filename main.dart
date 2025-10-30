@@ -89,7 +89,7 @@ class _BearMapPageState extends State<BearMapPage> {
   ];
   
   final DraggableScrollableController _draggableController = DraggableScrollableController();
-  final String lastUpdated = '2025年10月21日 7:00';
+  final String lastUpdated = '2025年10月21日 9:00';
   
   @override
   void initState() {
@@ -1653,12 +1653,12 @@ class _BearMapPageState extends State<BearMapPage> {
                                                   _getDisplayMeshData()!.score == 0
                                                       ? 'クマの出没報告がない地域です。'
                                                       : _getDisplayMeshData()!.score < 2.0
-                                                          ? 'クマの出没報告は少ない地域ですが\n' '山に入る際は基本的な注意を心がけましょう。'
+                                                          ? 'クマの出没報告は少ない地域ですが\n山に入る際は基本的な注意を心がけましょう。'
                                                           : _getDisplayMeshData()!.score < 4.0
-                                                              ? '定期的にクマの出没報告がある地域です。\n' '山に入る際は十分に注意しましょう。'
+                                                              ? '定期的にクマの出没報告がある地域です。\n山に入る際は十分に注意しましょう。'
                                                               : _getDisplayMeshData()!.score < 5.0
-                                                                  ? '最近クマの出没報告がある地域です。\n' '山に入る際は十分に注意しましょう。'
-                                                                  : '頻繁にクマの出没報告がある地域です。\n' '山や市街地との境界部でも十分な注意が必要です。',
+                                                                  ? '最近クマの出没報告がある地域です。\n山に入る際は十分に注意しましょう。'
+                                                                  : '頻繁にクマの出没報告がある地域です。\n山や市街地との境界部でも十分な注意が必要です。',
                                                   style: const TextStyle(fontSize: 14, color: Colors.grey),
                                                   textAlign: TextAlign.center,
                                                 ),
@@ -1701,29 +1701,53 @@ class _BearMapPageState extends State<BearMapPage> {
                                   
                                   const SizedBox(height: 16),
 
-                                  Row(
+                                  Column(
                                     children: [
-                                      Expanded(
-                                        child: OutlinedButton(
-                                          onPressed: () => _showUsageDialog(context),
-                                          style: OutlinedButton.styleFrom(
-                                            padding: EdgeInsets.symmetric(vertical: 12),
-                                            side: BorderSide(color: Colors.brown.shade300),
-                                            foregroundColor: Colors.brown.shade700,
+                                      Row(
+                                        children: [
+                                          Expanded(
+                                            child: OutlinedButton(
+                                              onPressed: () => _showUsageDialog(context),
+                                              style: OutlinedButton.styleFrom(
+                                                padding: EdgeInsets.symmetric(vertical: 12),
+                                                side: BorderSide(color: Colors.brown.shade300),
+                                                foregroundColor: Colors.brown.shade700,
+                                              ),
+                                              child: Text('ご利用にあたって'),
+                                            ),
                                           ),
-                                          child: Text('ご利用にあたって'),
-                                        ),
+                                          const SizedBox(width: 12),
+                                          Expanded(
+                                            child: OutlinedButton(
+                                              onPressed: () => _showMunicipalDialog(context),
+                                              style: OutlinedButton.styleFrom(
+                                                padding: EdgeInsets.symmetric(vertical: 12),
+                                                side: BorderSide(color: Colors.blue.shade300),
+                                                foregroundColor: Colors.blue.shade700,
+                                              ),
+                                              child: Text('自治体の皆様へ'),
+                                            ),
+                                          ),
+                                        ],
                                       ),
-                                      const SizedBox(width: 12),
-                                      Expanded(
+                                      const SizedBox(height: 12),
+                                      SizedBox(
+                                        width: double.infinity,
                                         child: OutlinedButton(
-                                          onPressed: () => _showMunicipalDialog(context),
+                                          onPressed: () async {
+                                            final Uri url = Uri.parse(
+                                              'https://www.research-coordinate.co.jp/post/クマに合わないためにどうしたら良いか？効果的なクマ対策と遭遇回避方法'
+                                            );
+                                            if (await canLaunchUrl(url)) {
+                                              await launchUrl(url, mode: LaunchMode.externalApplication);
+                                            }
+                                          },
                                           style: OutlinedButton.styleFrom(
                                             padding: EdgeInsets.symmetric(vertical: 12),
-                                            side: BorderSide(color: Colors.blue.shade300),
-                                            foregroundColor: Colors.blue.shade700,
+                                            side: BorderSide(color: Colors.green.shade300),
+                                            foregroundColor: Colors.green.shade700,
                                           ),
-                                          child: Text('自治体の皆様へ'),
+                                          child: Text('クマに遭わないために'),
                                         ),
                                       ),
                                     ],
@@ -1876,4 +1900,3 @@ class CustomPin {
     this.meshData,
   });
 }
-
