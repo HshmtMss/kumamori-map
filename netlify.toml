@@ -64,44 +64,12 @@
     Cache-Control = "public, max-age=3600"
     Content-Type = "text/csv; charset=utf-8"
 
-# リダイレクト設定（SEO用）
-
-# よく検索されるキーワードURLをメインページにリダイレクト
-[[redirects]]
-  from = "/bear-map"
-  to = "/"
-  status = 301
-
-[[redirects]]
-  from = "/kuma-map"
-  to = "/"
-  status = 301
-
-[[redirects]]
-  from = "/camping-safety"
-  to = "/"
-  status = 301
-
-[[redirects]]
-  from = "/hiking-safety"
-  to = "/"
-  status = 301
-
-[[redirects]]
-  from = "/mountain-safety"
-  to = "/"
-  status = 301
-
-[[redirects]]
-  from = "/outdoor-safety"
-  to = "/"
-  status = 301
-
-# SPAのための設定（最後に配置）
-# 404エラーを index.html にリダイレクト
+# 後継サイト「クマウォッチ (kuma-watch.jp)」へ全パス 301 リダイレクト
+# 旧 SEO ジュースを新サイトに引き継ぐため force=true で常に転送する
 [[redirects]]
   from = "/*"
-  to = "/index.html"
-  status = 200
+  to = "https://kuma-watch.jp/:splat"
+  status = 301
+  force = true
 
   
